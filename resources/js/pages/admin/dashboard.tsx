@@ -427,34 +427,7 @@ function HeroMiniStat({ label, value }: { label: string; value: number }) {
     );
 }
 
-function FilterSelect({
-    label,
-    value,
-    options,
-    onChange,
-}: {
-    label: string;
-    value: string;
-    options: string[];
-    onChange: (v: string) => void;
-}) {
-    return (
-        <div className="flex flex-col gap-1">
-            <label className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">{label}</label>
-            <select
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary/30"
-            >
-                {options.map((o) => (
-                    <option key={o} value={o}>
-                        {o}
-                    </option>
-                ))}
-            </select>
-        </div>
-    );
-}
+
 
 function QAction({ href, icon, label, bg }: { href: string; icon: React.ReactNode; label: string; bg: string }) {
     return (

@@ -11,7 +11,8 @@ use Illuminate\Support\Facades\DB;
 class QuotaService
 {
     public function __construct(
-        private NotificationService $notificationService
+        private NotificationService $notificationService,
+        private MailCommunicationService $mailCommunicationService,
     ) {}
 
     public function assignPlanToEmployees(QuotaPlan $plan, array $employeeIds): void
@@ -38,6 +39,7 @@ class QuotaService
             }
 
             $this->notificationService->notifyQuotaAssigned($employee, $plan);
+            $this->mailCommunicationService->notifyEmployeePlanAssigned($employee, $plan);
         }
     }
 
@@ -73,6 +75,9 @@ class QuotaService
                 $this->notificationService->notifyQuotaLow($quota->employee, $quota);
             }
         });
+
+        $quota->refresh();
+        $this->mailCommunicationService->notifyAdminEmployeeUsedItem($quota, $quantity);
     }
 
     public function expireOldQuotas(): void

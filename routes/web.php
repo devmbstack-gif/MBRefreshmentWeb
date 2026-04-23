@@ -1,9 +1,12 @@
 <?php
 
+use App\Http\Controllers\Web\Admin\AdminSearchController;
 use App\Http\Controllers\Web\Admin\DashboardController;
 use App\Http\Controllers\Web\Admin\EmployeeController;
 use App\Http\Controllers\Web\Admin\ItemController;
+use App\Http\Controllers\Web\Admin\MailMessageController;
 use App\Http\Controllers\Web\Admin\QuotaPlanController;
+use App\Http\Controllers\Web\Employee\EmployeeSearchController;
 use App\Http\Controllers\Web\Employee\QuotaController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -42,6 +45,9 @@ Route::middleware(['auth', 'role.admin'])
         Route::post('/plans', [QuotaPlanController::class, 'store'])->name('plans.store');
         Route::post('/plans/{plan}/assign', [QuotaPlanController::class, 'assign'])->name('plans.assign');
         Route::patch('/plans/{plan}/toggle-status', [QuotaPlanController::class, 'toggleStatus'])->name('plans.toggle-status');
+
+        Route::get('/search', AdminSearchController::class)->name('search');
+        Route::get('/mail-messages', [MailMessageController::class, 'index'])->name('mail-messages.index');
     });
 
 Route::middleware(['auth', 'role.employee'])
@@ -51,6 +57,9 @@ Route::middleware(['auth', 'role.employee'])
         Route::get('/quota', [QuotaController::class, 'index'])->name('quota.index');
         Route::post('/quota/{quota}/use', [QuotaController::class, 'use'])->name('quota.use');
         Route::get('/history', [QuotaController::class, 'history'])->name('history.index');
+        Route::get('/notifications', [QuotaController::class, 'notifications'])->name('notifications.index');
+
+        Route::get('/search', EmployeeSearchController::class)->name('search');
     });
 
 require __DIR__.'/settings.php';

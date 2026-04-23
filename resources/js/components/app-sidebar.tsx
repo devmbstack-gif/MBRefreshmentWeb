@@ -35,7 +35,7 @@ const adminNavGroups: NavGroup[] = [
         items: [
             { title: 'Employees', href: '/admin/employees', icon: Users },
             { title: 'Items', href: '/admin/items', icon: Package },
-            { title: 'Quota Plans', href: '/admin/plans', icon: ClipboardList },
+            { title: 'Month Plans', href: '/admin/plans', icon: ClipboardList },
         ],
     },
     {

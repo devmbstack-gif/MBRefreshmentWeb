@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web\Employee;
 
 use App\Http\Controllers\Controller;
+use App\Models\AppNotification;
 use App\Models\EmployeeQuota;
 use App\Models\QuotaUsage;
 use App\Services\QuotaService;
@@ -77,6 +78,30 @@ class QuotaController extends Controller
 
         return Inertia::render('employee/history', [
             'usages' => $usages,
+        ]);
+    }
+
+    public function notifications(): Response
+    {
+        $user = auth()->user();
+
+        $notifications = AppNotification::query()
+            ->where('user_id', $user->id)
+            ->latest('created_at')
+            ->limit(80)
+            ->get()
+            ->map(fn ($notification) => [
+                'id' => $notification->id,
+                'kind' => $notification->type,
+                'subject' => $notification->title,
+                'body' => $notification->message,
+                'status' => 'sent',
+                'failed_reason' => null,
+                'created_at' => $notification->created_at?->format('M d, Y h:i A'),
+            ]);
+
+        return Inertia::render('employee/notifications', [
+            'notifications' => $notifications,
         ]);
     }
 }

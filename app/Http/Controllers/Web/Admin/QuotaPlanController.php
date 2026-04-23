@@ -36,6 +36,7 @@ class QuotaPlanController extends Controller
                     'quantity' => $pi->quantity,
                 ]),
                 'assigned_count' => $plan->employeeQuotas()->distinct('employee_id')->count(),
+                'assigned_employee_ids' => $plan->employeeQuotas()->distinct('employee_id')->pluck('employee_id')->values(),
             ]);
 
         $availableItems = Item::where('is_active', true)->get(['id', 'name', 'category']);
@@ -74,7 +75,7 @@ class QuotaPlanController extends Controller
                 'starts_at' => $request->starts_at,
                 'ends_at' => $request->ends_at,
                 'is_active' => true,
-                'created_by' => auth()->id(),
+                'created_by' => $request->user()->id,
             ]);
 
             foreach ($request->items as $itemData) {
@@ -86,7 +87,7 @@ class QuotaPlanController extends Controller
             }
         });
 
-        return redirect()->route('admin.plans.index')->with('success', 'Quota plan created successfully.');
+        return redirect()->route('admin.plans.index')->with('success', 'Month plan created successfully.');
     }
 
     public function assign(Request $request, QuotaPlan $plan): RedirectResponse
@@ -100,7 +101,7 @@ class QuotaPlanController extends Controller
 
         $count = count($request->employee_ids);
 
-        return redirect()->route('admin.plans.index')->with('success', "Plan assigned to {$count} employee(s) successfully.");
+        return redirect()->route('admin.plans.index')->with('success', "Month plan assigned to {$count} employee(s) successfully.");
     }
 
     public function toggleStatus(QuotaPlan $plan): RedirectResponse
