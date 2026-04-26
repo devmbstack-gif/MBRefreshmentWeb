@@ -22,6 +22,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import type { NavGroup } from '@/types';
+import { edit as profileEdit } from '@/routes/profile';
 
 const adminNavGroups: NavGroup[] = [
     {
@@ -41,7 +42,7 @@ const adminNavGroups: NavGroup[] = [
     {
         label: 'Settings',
         items: [
-            { title: 'Settings', href: '/settings', icon: Settings },
+            { title: 'Settings', href: profileEdit(), icon: Settings },
         ],
     },
 ];
