@@ -91,7 +91,7 @@ export default function AppSidebarLayout({
               },
               {
                   label: 'SETTINGS',
-                  items: [{ title: 'Settings', href: '/settings', icon: Settings }],
+                  items: [{ title: 'Settings', href: profileEdit(), icon: Settings }],
               },
           ]
         : [
