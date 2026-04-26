@@ -555,18 +555,10 @@ function EditEmployeeModal({
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        form.transform((data) => ({
-            ...data,
-            _method: 'put',
-        })).post(`/admin/employees/${employee.id}`, {
+        form.transform((data) => ({ ...data, _method: 'put' as const }));
+        form.post(`/admin/employees/${employee.id}`, {
             forceFormData: true,
-            onSuccess: () => {
-                form.transform((data) => data);
-                onClose();
-            },
-            onError: () => {
-                form.transform((data) => data);
-            },
+            onSuccess: () => onClose(),
         });
     }
 

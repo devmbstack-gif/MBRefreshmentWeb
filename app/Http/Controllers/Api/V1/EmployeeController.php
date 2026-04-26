@@ -9,6 +9,7 @@ use App\Models\QuotaUsage;
 use App\Services\QuotaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class EmployeeController extends Controller
 {
@@ -52,7 +53,7 @@ class EmployeeController extends Controller
 
         return response()->json([
             'status' => true,
-            'message'=>'Employee Quotas',
+            'message' => 'Employee Quotas',
             'quotas' => $quotas,
         ]);
     }
@@ -118,7 +119,7 @@ class EmployeeController extends Controller
 
         return response()->json([
             'status' => true,
-            'message'=>'Employee History',
+            'message' => 'Employee History',
             'history' => $usages,
         ]);
     }
@@ -144,7 +145,7 @@ class EmployeeController extends Controller
 
         return response()->json([
             'status' => true,
-            'message'=>'Employee Notifications',
+            'message' => 'Employee Notifications',
             'notifications' => $notifications,
         ]);
     }
@@ -168,6 +169,34 @@ class EmployeeController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Notification marked as read.',
+        ]);
+    }
+
+    public function updateProfileAvatar(Request $request): JsonResponse
+    {
+        $request->validate([
+            'avatar' => 'required|file|mimes:jpg,jpeg,png,webp|max:2048',
+        ], [
+            'avatar.required' => 'Please choose an image file.',
+            'avatar.file' => 'Please upload a valid file.',
+            'avatar.mimes' => 'Profile image must be a JPG, JPEG, PNG, or WEBP file.',
+            'avatar.max' => 'Profile image size must not be greater than 2MB.',
+        ]);
+
+        $user = $request->user();
+
+        if ($user->avatar) {
+            Storage::disk('public')->delete(str_replace('/storage/', '', $user->avatar));
+        }
+
+        $user->avatar = '/storage/'.$request->file('avatar')->store('avatars', 'public');
+        $user->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Profile image updated successfully.',
+            'avatar' => $user->avatar,
+            'avatar_url' => $this->buildImageUrl($user->avatar),
         ]);
     }
 }

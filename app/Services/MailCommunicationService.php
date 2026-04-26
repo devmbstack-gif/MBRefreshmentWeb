@@ -6,6 +6,7 @@ use App\Models\Employee;
 use App\Models\EmployeeQuota;
 use App\Models\MailMessage;
 use App\Models\QuotaPlan;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\View;
@@ -13,11 +14,21 @@ use Throwable;
 
 class MailCommunicationService
 {
+    public function __construct(
+        private NotificationService $notificationService,
+    ) {}
+
     public function notifyEmployeePlanAssigned(Employee $employee, QuotaPlan $plan): void
     {
         $employee->loadMissing('user');
         $user = $employee->user;
-        if (! $user?->email) {
+        if (! $user) {
+            return;
+        }
+
+        $this->notificationService->notifyQuotaAssigned($employee, $plan);
+
+        if (! $user->email) {
             return;
         }
 
@@ -66,9 +77,23 @@ class MailCommunicationService
         $fromName = (string) (config('mail.from.name') ?? config('app.name'));
 
         $employee = $quota->employee;
+        if (! $employee) {
+            return;
+        }
+
         $user = $employee->user;
-        $itemName = $quota->item->name;
-        $planTitle = $quota->plan->title;
+        if (! $user) {
+            return;
+        }
+
+        $item = $quota->item;
+        $plan = $quota->plan;
+        if (! $item || ! $plan) {
+            return;
+        }
+
+        $itemName = $item->name;
+        $planTitle = $plan->title;
 
         $subject = "{$user->name} ordered {$quantity} × {$itemName}";
         $plainBody = "{$user->name} ({$employee->employee_code}) used {$quantity} of {$itemName} from plan \"{$planTitle}\". Remaining on this line: {$quota->remaining_qty}.";
@@ -85,7 +110,7 @@ class MailCommunicationService
             'ctaUrl' => url('/admin/dashboard'),
         ])->render();
 
-        $this->dispatchMail(
+        $sent = $this->dispatchMail(
             kind: 'item_ordered',
             direction: 'to_admin',
             subject: $subject,
@@ -96,6 +121,21 @@ class MailCommunicationService
             toEmail: $toAddress,
             employeeId: $employee->id,
         );
+
+        if ($sent) {
+            User::query()
+                ->where('role', 'super_admin')
+                ->where('is_active', true)
+                ->each(function (User $admin) use ($subject, $plainBody, $quota) {
+                    $this->notificationService->saveInApp(
+                        $admin,
+                        'admin_item_ordered',
+                        $subject,
+                        $plainBody,
+                        $quota->id
+                    );
+                });
+        }
     }
 
     private function dispatchMail(
@@ -108,7 +148,7 @@ class MailCommunicationService
         string $fromName,
         string $toEmail,
         ?int $employeeId,
-    ): void {
+    ): bool {
         try {
             Mail::html($html, function ($message) use ($toEmail, $subject, $fromEmail, $fromName) {
                 $message->from($fromEmail, $fromName)
@@ -126,6 +166,8 @@ class MailCommunicationService
                 'employee_id' => $employeeId,
                 'status' => 'sent',
             ]);
+
+            return true;
         } catch (Throwable $e) {
             report($e);
 
@@ -140,6 +182,8 @@ class MailCommunicationService
                 'status' => 'failed',
                 'failed_reason' => $e->getMessage(),
             ]);
+
+            return false;
         }
     }
 }

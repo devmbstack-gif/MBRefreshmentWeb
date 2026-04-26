@@ -24,6 +24,9 @@ class User extends Authenticatable
         'avatar',
         'phone',
         'is_active',
+        'fcm_token',
+        'fcm_platform',
+        'fcm_updated_at',
     ];
 
     protected $hidden = [
@@ -40,6 +43,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
             'is_active' => 'boolean',
+            'fcm_updated_at' => 'datetime',
         ];
     }
 

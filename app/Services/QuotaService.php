@@ -38,7 +38,6 @@ class QuotaService
                 );
             }
 
-            $this->notificationService->notifyQuotaAssigned($employee, $plan);
             $this->mailCommunicationService->notifyEmployeePlanAssigned($employee, $plan);
         }
     }

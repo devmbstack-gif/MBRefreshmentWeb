@@ -12,6 +12,7 @@ import {
     Search,
     Users,
 } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 type Stats = {
     total_employees: number;
@@ -25,6 +26,7 @@ type Stats = {
 type RecentUsage = {
     id: number;
     employee_name: string;
+    employee_avatar: string | null;
     item_name: string;
     item_category: string;
     quantity_used: number;
@@ -34,6 +36,7 @@ type RecentUsage = {
 
 type LowQuotaEmployee = {
     employee_name: string;
+    employee_avatar: string | null;
     item_name: string;
     remaining_qty: number;
     total_qty: number;
@@ -241,12 +244,17 @@ export default function AdminDashboard({ stats, recent_usages, low_quota_employe
                                             <tr key={u.id} className="transition-colors hover:bg-gray-50/80">
                                                 <td className="px-6 py-3.5">
                                                     <div className="flex items-center gap-3">
-                                                        <span
-                                                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-                                                            style={{ backgroundColor: avatarBg(u.employee_name) }}
-                                                        >
-                                                            {getInitials(u.employee_name)}
-                                                        </span>
+                                                        <Avatar className="h-8 w-8 shrink-0 border border-gray-100">
+                                                            {u.employee_avatar ? (
+                                                                <AvatarImage src={u.employee_avatar} alt={u.employee_name} className="object-cover" />
+                                                            ) : null}
+                                                            <AvatarFallback
+                                                                className="rounded-full text-xs font-bold text-white"
+                                                                style={{ backgroundColor: avatarBg(u.employee_name) }}
+                                                            >
+                                                                {getInitials(u.employee_name)}
+                                                            </AvatarFallback>
+                                                        </Avatar>
                                                         <span className="font-medium text-gray-800">{u.employee_name}</span>
                                                     </div>
                                                 </td>
@@ -291,12 +299,17 @@ export default function AdminDashboard({ stats, recent_usages, low_quota_employe
                                     <div className="divide-y divide-gray-100">
                                         {low_quota_employees.map((emp, i) => (
                                             <div key={i} className="flex items-center gap-3 px-5 py-3">
-                                                <span
-                                                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-                                                    style={{ backgroundColor: avatarBg(emp.employee_name) }}
-                                                >
-                                                    {getInitials(emp.employee_name)}
-                                                </span>
+                                                <Avatar className="h-8 w-8 shrink-0 border border-gray-100">
+                                                    {emp.employee_avatar ? (
+                                                        <AvatarImage src={emp.employee_avatar} alt={emp.employee_name} className="object-cover" />
+                                                    ) : null}
+                                                    <AvatarFallback
+                                                        className="rounded-full text-xs font-bold text-white"
+                                                        style={{ backgroundColor: avatarBg(emp.employee_name) }}
+                                                    >
+                                                        {getInitials(emp.employee_name)}
+                                                    </AvatarFallback>
+                                                </Avatar>
                                                 <div className="min-w-0 flex-1">
                                                     <p className="truncate text-xs font-medium text-gray-800">{emp.employee_name}</p>
                                                     <p className="truncate text-xs text-gray-400">{emp.item_name}</p>

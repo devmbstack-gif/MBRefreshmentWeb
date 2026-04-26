@@ -17,13 +17,13 @@ class DashboardController extends Controller
     public function index(): Response
     {
         $stats = [
-            'total_employees'  => Employee::count(),
-            'active_plans'     => QuotaPlan::where('is_active', true)->count(),
-            'today_usages'     => QuotaUsage::whereDate('used_at', today())->count(),
+            'total_employees' => Employee::count(),
+            'active_plans' => QuotaPlan::where('is_active', true)->count(),
+            'today_usages' => QuotaUsage::whereDate('used_at', today())->count(),
             'low_quota_alerts' => EmployeeQuota::where('remaining_qty', '<=', 1)
                 ->where('status', 'active')->count(),
-            'total_items'      => Item::where('is_active', true)->count(),
-            'month_usages'     => QuotaUsage::whereMonth('used_at', now()->month)
+            'total_items' => Item::where('is_active', true)->count(),
+            'month_usages' => QuotaUsage::whereMonth('used_at', now()->month)
                 ->whereYear('used_at', now()->year)->count(),
         ];
 
@@ -32,13 +32,14 @@ class DashboardController extends Controller
             ->take(10)
             ->get()
             ->map(fn ($u) => [
-                'id'            => $u->id,
+                'id' => $u->id,
                 'employee_name' => $u->employee->user->name,
-                'item_name'     => $u->item->name,
+                'employee_avatar' => $u->employee->user->avatar,
+                'item_name' => $u->item->name,
                 'item_category' => $u->item->category,
                 'quantity_used' => $u->quantity_used,
-                'used_at'       => $u->used_at->diffForHumans(),
-                'used_at_full'  => $u->used_at->format('M d, Y h:i A'),
+                'used_at' => $u->used_at->diffForHumans(),
+                'used_at_full' => $u->used_at->format('M d, Y h:i A'),
             ]);
 
         $lowQuotaEmployees = EmployeeQuota::with(['employee.user', 'item'])
@@ -49,9 +50,10 @@ class DashboardController extends Controller
             ->get()
             ->map(fn ($eq) => [
                 'employee_name' => $eq->employee->user->name,
-                'item_name'     => $eq->item->name,
+                'employee_avatar' => $eq->employee->user->avatar,
+                'item_name' => $eq->item->name,
                 'remaining_qty' => $eq->remaining_qty,
-                'total_qty'     => $eq->total_qty,
+                'total_qty' => $eq->total_qty,
             ]);
 
         $activePlans = QuotaPlan::where('is_active', true)
@@ -59,18 +61,18 @@ class DashboardController extends Controller
             ->take(4)
             ->get()
             ->map(fn ($p) => [
-                'id'          => $p->id,
-                'title'       => $p->title,
+                'id' => $p->id,
+                'title' => $p->title,
                 'period_type' => $p->period_type,
-                'ends_at'     => $p->ends_at?->format('M d, Y'),
+                'ends_at' => $p->ends_at?->format('M d, Y'),
             ]);
 
         return Inertia::render('admin/dashboard', [
-            'stats'               => $stats,
-            'recent_usages'       => $recentUsages,
+            'stats' => $stats,
+            'recent_usages' => $recentUsages,
             'low_quota_employees' => $lowQuotaEmployees,
-            'active_plans'        => $activePlans,
-            'admin_name'          => Auth::user()->name,
+            'active_plans' => $activePlans,
+            'admin_name' => Auth::user()->name,
         ]);
     }
 }
