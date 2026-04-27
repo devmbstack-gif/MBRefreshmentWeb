@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\NotificationService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\View;
 use Inertia\Inertia;
@@ -55,7 +56,7 @@ class MailMessageController extends Controller
 
         $replies = MailMessage::query()
             ->with('employee.user:id,name')
-            ->where('kind', 'admin_reply')
+            ->whereIn('kind', ['admin_reply', 'employee_reply'])
             ->whereNotNull('reply_to_id')
             ->latest('created_at')
             ->limit(240)
@@ -69,6 +70,7 @@ class MailMessageController extends Controller
                 'employee_id' => $m->employee_id,
                 'employee_name' => $m->employee?->user?->name,
                 'attachments' => $this->buildAttachmentUrls($m->attachments),
+                'kind' => $m->kind,
             ]);
 
         return Inertia::render('admin/feedback', ['messages' => $messages, 'replies' => $replies]);
@@ -134,5 +136,19 @@ class MailMessageController extends Controller
         );
 
         return redirect()->route('admin.mail-messages.index')->with('success', 'Reply sent to employee successfully.');
+    }
+
+    public function destroy(MailMessage $message): RedirectResponse
+    {
+        if (! in_array($message->kind, ['issue_report', 'feature_request'], true)) {
+            return redirect()->route('admin.mail-messages.index')->with('error', 'Only request threads can be deleted.');
+        }
+
+        DB::transaction(function () use ($message) {
+            MailMessage::query()->where('reply_to_id', $message->id)->delete();
+            $message->delete();
+        });
+
+        return redirect()->route('admin.mail-messages.index')->with('success', 'Feedback thread deleted successfully.');
     }
 }

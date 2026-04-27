@@ -133,7 +133,7 @@ class QuotaController extends Controller
 
         $replies = MailMessage::query()
             ->where('employee_id', $employee?->id)
-            ->where('kind', 'admin_reply')
+            ->whereIn('kind', ['admin_reply', 'employee_reply'])
             ->whereNotNull('reply_to_id')
             ->latest('created_at')
             ->limit(120)
@@ -145,6 +145,7 @@ class QuotaController extends Controller
                 'body' => $m->body,
                 'attachments' => collect($m->attachments ?? [])->map(fn ($path) => url($path))->values(),
                 'created_at' => $m->created_at?->format('M d, Y h:i A'),
+                'kind' => $m->kind,
             ]);
 
         return Inertia::render('employee/feedback', [
@@ -197,5 +198,63 @@ class QuotaController extends Controller
             });
 
         return redirect()->route('employee.feedback.index')->with('success', 'Your message was sent to admin.');
+    }
+
+    public function replyFeedback(Request $request, MailMessage $message): RedirectResponse
+    {
+        $validated = $request->validate([
+            'body' => 'required|string|max:5000',
+        ]);
+
+        $employee = $request->user()->employee;
+        if (! $employee || $message->employee_id !== $employee->id) {
+            abort(403, 'This request does not belong to you.');
+        }
+        if (! in_array($message->kind, ['issue_report', 'feature_request'], true)) {
+            return redirect()->route('employee.feedback.index')->with('error', 'Reply can only be sent on request threads.');
+        }
+
+        MailMessage::create([
+            'kind' => 'employee_reply',
+            'direction' => 'to_admin',
+            'subject' => "Re: {$message->subject}",
+            'body' => $validated['body'],
+            'from_email' => (string) $request->user()->email,
+            'to_email' => (string) config('mail.from.address'),
+            'employee_id' => $employee->id,
+            'reply_to_id' => $message->id,
+            'status' => 'sent',
+        ]);
+
+        User::query()
+            ->where('role', 'super_admin')
+            ->where('is_active', true)
+            ->each(function (User $admin) use ($validated, $message) {
+                app(NotificationService::class)->saveInApp(
+                    $admin,
+                    'general',
+                    'Employee replied to request',
+                    $validated['body'],
+                    $message->id
+                );
+            });
+
+        return redirect()->route('employee.feedback.index')->with('success', 'Your reply was sent to admin.');
+    }
+
+    public function deleteFeedback(Request $request, MailMessage $message): RedirectResponse
+    {
+        $employee = $request->user()->employee;
+        if (! $employee || $message->employee_id !== $employee->id) {
+            abort(403, 'This request does not belong to you.');
+        }
+        if (! in_array($message->kind, ['issue_report', 'feature_request'], true)) {
+            return redirect()->route('employee.feedback.index')->with('error', 'Only request threads can be deleted.');
+        }
+
+        MailMessage::query()->where('reply_to_id', $message->id)->delete();
+        $message->delete();
+
+        return redirect()->route('employee.feedback.index')->with('success', 'Request deleted successfully.');
     }
 }

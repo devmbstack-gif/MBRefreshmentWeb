@@ -22,6 +22,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/notifications/{notification}/read', [EmployeeController::class, 'markNotificationAsRead']);
         Route::get('/feedback', [EmployeeController::class, 'feedback']);
         Route::post('/feedback', [EmployeeController::class, 'submitFeedback']);
+        Route::post('/feedback/{message}/reply', [EmployeeController::class, 'replyFeedback']);
+        Route::delete('/feedback/{message}', [EmployeeController::class, 'deleteFeedback']);
         Route::post('/profile/avatar', [EmployeeController::class, 'updateProfileAvatar']);
     });
 });

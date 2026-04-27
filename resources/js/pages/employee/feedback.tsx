@@ -1,5 +1,15 @@
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -15,6 +25,7 @@ type FeedbackMessage = {
 type FeedbackReply = {
     id: number;
     reply_to_id: number | null;
+    kind?: string;
     subject: string;
     body: string;
     attachments?: string[];
@@ -23,12 +34,28 @@ type FeedbackReply = {
 
 export default function EmployeeFeedback({ messages = [], replies = [] }: { messages?: FeedbackMessage[]; replies?: FeedbackReply[] }) {
     const { flash } = usePage<{ flash: { success?: string; error?: string } }>().props;
+    const [replyingToId, setReplyingToId] = useState<number | null>(null);
+    const [deletingMessage, setDeletingMessage] = useState<FeedbackMessage | null>(null);
     const form = useForm({
         kind: 'issue_report',
         subject: '',
         body: '',
         attachments: [] as File[],
     });
+    const replyForm = useForm({
+        body: '',
+    });
+
+    const repliesByParent = useMemo(() => {
+        const map = new Map<number, FeedbackReply[]>();
+        for (const reply of replies) {
+            if (!reply.reply_to_id) continue;
+            const existing = map.get(reply.reply_to_id) ?? [];
+            existing.push(reply);
+            map.set(reply.reply_to_id, existing);
+        }
+        return map;
+    }, [replies]);
 
     function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -36,6 +63,20 @@ export default function EmployeeFeedback({ messages = [], replies = [] }: { mess
             forceFormData: true,
             onSuccess: () => form.reset('subject', 'body', 'attachments'),
         });
+    }
+
+    function handleReplySubmit(e: React.FormEvent, messageId: number) {
+        e.preventDefault();
+        replyForm.post(`/employee/feedback/${messageId}/reply`, {
+            onSuccess: () => {
+                replyForm.reset('body');
+                setReplyingToId(null);
+            },
+        });
+    }
+
+    function handleDelete(messageId: number) {
+        router.delete(`/employee/feedback/${messageId}`);
     }
 
     return (
@@ -139,13 +180,13 @@ export default function EmployeeFeedback({ messages = [], replies = [] }: { mess
                                     </div>
                                 )}
 
-                                {(replies.filter((reply) => reply.reply_to_id === message.id)).length > 0 && (
+                                {(repliesByParent.get(message.id) ?? []).length > 0 && (
                                     <div className="mt-3 space-y-2 rounded-xl border border-emerald-100 bg-emerald-50/40 p-3">
-                                        {replies
-                                            .filter((reply) => reply.reply_to_id === message.id)
-                                            .map((reply) => (
+                                        {(repliesByParent.get(message.id) ?? []).map((reply) => (
                                                 <div key={reply.id} className="rounded-lg border border-emerald-200 bg-white px-3 py-2">
-                                                    <p className="text-xs font-semibold text-emerald-700">Admin reply</p>
+                                                    <p className="text-xs font-semibold text-emerald-700">
+                                                        {reply.kind === 'employee_reply' ? 'You' : 'Admin reply'}
+                                                    </p>
                                                     <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">{reply.body}</p>
                                                     {(reply.attachments?.length ?? 0) > 0 && (
                                                         <div className="mt-2 flex flex-wrap gap-2">
@@ -167,10 +208,63 @@ export default function EmployeeFeedback({ messages = [], replies = [] }: { mess
                                             ))}
                                     </div>
                                 )}
+                                <div className="mt-4 flex flex-wrap gap-2">
+                                    <Button size="sm" variant="outline" onClick={() => setReplyingToId((prev) => (prev === message.id ? null : message.id))}>
+                                        {replyingToId === message.id ? 'Cancel Reply' : 'Reply to admin'}
+                                    </Button>
+                                    <Button size="sm" variant="destructive" onClick={() => setDeletingMessage(message)}>
+                                        Delete
+                                    </Button>
+                                </div>
+                                {replyingToId === message.id && (
+                                    <form onSubmit={(e) => handleReplySubmit(e, message.id)} className="mt-3 space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                                        <Label>Reply message</Label>
+                                        <textarea
+                                            value={replyForm.data.body}
+                                            onChange={(e) => replyForm.setData('body', e.target.value)}
+                                            rows={4}
+                                            className="w-full rounded-md border border-input bg-background p-3 text-sm"
+                                            placeholder="Write your reply to admin..."
+                                        />
+                                        {replyForm.errors.body && <p className="text-xs text-destructive">{replyForm.errors.body}</p>}
+                                        <div className="flex justify-end">
+                                            <Button type="submit" size="sm" disabled={replyForm.processing}>
+                                                {replyForm.processing ? 'Sending...' : 'Send reply'}
+                                            </Button>
+                                        </div>
+                                    </form>
+                                )}
                             </div>
                         ))
                     )}
                 </div>
+
+                {deletingMessage && (
+                    <Dialog open={true} onOpenChange={() => setDeletingMessage(null)}>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>Delete request</DialogTitle>
+                                <DialogDescription>
+                                    This will permanently delete "{deletingMessage.subject}" and all replies in this thread.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter className="gap-2">
+                                <DialogClose asChild>
+                                    <Button variant="outline">Cancel</Button>
+                                </DialogClose>
+                                <Button
+                                    variant="destructive"
+                                    onClick={() => {
+                                        handleDelete(deletingMessage.id);
+                                        setDeletingMessage(null);
+                                    }}
+                                >
+                                    Delete permanently
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+                )}
             </div>
         </>
     );

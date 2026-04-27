@@ -230,7 +230,7 @@ class EmployeeController extends Controller
 
         $repliesByParent = MailMessage::query()
             ->where('employee_id', $employee?->id)
-            ->where('kind', 'admin_reply')
+            ->whereIn('kind', ['admin_reply', 'employee_reply'])
             ->whereNotNull('reply_to_id')
             ->latest('created_at')
             ->limit(120)
@@ -242,6 +242,7 @@ class EmployeeController extends Controller
                 'body' => $m->body,
                 'attachments' => $this->buildAttachmentUrls($m->attachments),
                 'created_at' => $m->created_at?->toIso8601String(),
+                'kind' => $m->kind,
             ])
             ->groupBy('reply_to_id');
 
@@ -311,5 +312,100 @@ class EmployeeController extends Controller
             'feedback_id' => $feedback->id,
             'attachments' => $this->buildAttachmentUrls($attachmentPaths),
         ], 201);
+    }
+
+    public function replyFeedback(Request $request, MailMessage $message): JsonResponse
+    {
+        $validated = $request->validate([
+            'body' => 'required|string|max:5000',
+            'attachments' => 'nullable|array|max:5',
+            'attachments.*' => 'file|mimes:jpg,jpeg,png,webp|max:4096',
+        ]);
+
+        $employee = $request->user()->employee;
+        if (! $employee || $message->employee_id !== $employee->id) {
+            return response()->json([
+                'status' => false,
+                'message' => 'This request does not belong to you.',
+            ], 403);
+        }
+        if (! in_array($message->kind, ['issue_report', 'feature_request'], true)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Reply can only be sent on request threads.',
+            ], 422);
+        }
+
+        $attachmentPaths = [];
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $attachmentPaths[] = '/storage/'.$file->store('feedback-attachments', 'public');
+            }
+        }
+
+        $reply = MailMessage::create([
+            'kind' => 'employee_reply',
+            'direction' => 'to_admin',
+            'subject' => "Re: {$message->subject}",
+            'body' => $validated['body'],
+            'from_email' => (string) $request->user()->email,
+            'to_email' => (string) config('mail.from.address'),
+            'employee_id' => $employee->id,
+            'reply_to_id' => $message->id,
+            'status' => 'sent',
+            'attachments' => $attachmentPaths,
+        ]);
+
+        User::query()
+            ->where('role', 'super_admin')
+            ->where('is_active', true)
+            ->each(function (User $admin) use ($validated, $message) {
+                app(NotificationService::class)->saveInApp(
+                    $admin,
+                    'general',
+                    'Employee replied to request',
+                    $validated['body'],
+                    $message->id
+                );
+            });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Reply sent successfully.',
+            'reply' => [
+                'id' => $reply->id,
+                'reply_to_id' => $reply->reply_to_id,
+                'kind' => $reply->kind,
+                'subject' => $reply->subject,
+                'body' => $reply->body,
+                'attachments' => $this->buildAttachmentUrls($attachmentPaths),
+                'created_at' => $reply->created_at?->toIso8601String(),
+            ],
+        ], 201);
+    }
+
+    public function deleteFeedback(Request $request, MailMessage $message): JsonResponse
+    {
+        $employee = $request->user()->employee;
+        if (! $employee || $message->employee_id !== $employee->id) {
+            return response()->json([
+                'status' => false,
+                'message' => 'This request does not belong to you.',
+            ], 403);
+        }
+        if (! in_array($message->kind, ['issue_report', 'feature_request'], true)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Only request threads can be deleted.',
+            ], 422);
+        }
+
+        MailMessage::query()->where('reply_to_id', $message->id)->delete();
+        $message->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Feedback thread deleted successfully.',
+        ]);
     }
 }

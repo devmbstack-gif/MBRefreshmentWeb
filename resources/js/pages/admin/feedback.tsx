@@ -1,6 +1,15 @@
-import { Head, useForm, usePage } from '@inertiajs/react';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 
 type FeedbackMessage = {
@@ -22,6 +31,7 @@ type FeedbackMessage = {
 type FeedbackReply = {
     id: number;
     reply_to_id: number | null;
+    kind?: string;
     subject: string;
     body: string;
     created_at: string | null;
@@ -33,6 +43,7 @@ type FeedbackReply = {
 export default function AdminFeedback({ messages, replies }: { messages: FeedbackMessage[]; replies: FeedbackReply[] }) {
     const { flash } = usePage<{ flash: { success?: string; error?: string } }>().props;
     const [replyingTo, setReplyingTo] = useState<FeedbackMessage | null>(null);
+    const [deletingMessage, setDeletingMessage] = useState<FeedbackMessage | null>(null);
     const form = useForm({ body: '' });
     const feedbackMessages = messages.filter((message) => ['issue_report', 'feature_request'].includes(message.kind));
 
@@ -65,6 +76,10 @@ export default function AdminFeedback({ messages, replies }: { messages: Feedbac
                 setReplyingTo(null);
             },
         });
+    }
+
+    function handleDelete(messageId: number) {
+        router.delete(`/admin/mail-messages/${messageId}`);
     }
 
     return (
@@ -122,7 +137,9 @@ export default function AdminFeedback({ messages, replies }: { messages: Feedbac
                                     <div className="mt-4 space-y-2 rounded-xl border border-emerald-100 bg-emerald-50/40 p-3">
                                         {(repliesByParent.get(message.id) ?? []).map((reply) => (
                                             <div key={reply.id} className="rounded-lg border border-emerald-200 bg-white px-3 py-2">
-                                                <p className="text-xs font-semibold text-emerald-700">Admin reply</p>
+                                                <p className="text-xs font-semibold text-emerald-700">
+                                                    {reply.kind === 'employee_reply' ? 'Employee reply' : 'Admin reply'}
+                                                </p>
                                                 <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">{reply.body}</p>
                                                 {(reply.attachments?.length ?? 0) > 0 && (
                                                     <div className="mt-2 flex flex-wrap gap-2">
@@ -147,6 +164,9 @@ export default function AdminFeedback({ messages, replies }: { messages: Feedbac
                                 <div className="mt-4">
                                     <Button size="sm" variant="outline" onClick={() => setReplyingTo(message)}>
                                         Reply to employee
+                                    </Button>
+                                    <Button size="sm" variant="destructive" className="ml-2" onClick={() => setDeletingMessage(message)}>
+                                        Delete thread
                                     </Button>
                                 </div>
                             </div>
@@ -178,6 +198,33 @@ export default function AdminFeedback({ messages, replies }: { messages: Feedbac
                             </Button>
                         </div>
                     </form>
+                )}
+
+                {deletingMessage && (
+                    <Dialog open={true} onOpenChange={() => setDeletingMessage(null)}>
+                        <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>Delete feedback thread</DialogTitle>
+                                <DialogDescription>
+                                    This will permanently delete "{deletingMessage.subject}" and all replies in this thread.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <DialogFooter className="gap-2">
+                                <DialogClose asChild>
+                                    <Button variant="outline">Cancel</Button>
+                                </DialogClose>
+                                <Button
+                                    variant="destructive"
+                                    onClick={() => {
+                                        handleDelete(deletingMessage.id);
+                                        setDeletingMessage(null);
+                                    }}
+                                >
+                                    Delete permanently
+                                </Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
                 )}
             </div>
         </>

@@ -53,6 +53,7 @@ Route::middleware(['auth', 'role.admin'])
         Route::get('/search', AdminSearchController::class)->name('search');
         Route::get('/mail-messages', [MailMessageController::class, 'index'])->name('mail-messages.index');
         Route::post('/mail-messages/{message}/reply', [MailMessageController::class, 'reply'])->name('mail-messages.reply');
+        Route::delete('/mail-messages/{message}', [MailMessageController::class, 'destroy'])->name('mail-messages.destroy');
         Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
         Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     });
@@ -67,6 +68,8 @@ Route::middleware(['auth', 'role.employee'])
         Route::get('/notifications', [QuotaController::class, 'notifications'])->name('notifications.index');
         Route::get('/feedback', [QuotaController::class, 'feedback'])->name('feedback.index');
         Route::post('/feedback', [QuotaController::class, 'submitFeedback'])->name('feedback.store');
+        Route::post('/feedback/{message}/reply', [QuotaController::class, 'replyFeedback'])->name('feedback.reply');
+        Route::delete('/feedback/{message}', [QuotaController::class, 'deleteFeedback'])->name('feedback.destroy');
 
         Route::get('/search', EmployeeSearchController::class)->name('search');
     });
