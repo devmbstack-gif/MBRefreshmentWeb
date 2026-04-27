@@ -13,6 +13,7 @@ import {
     Settings,
     User,
     Users,
+    MessageSquareWarning,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -44,18 +45,14 @@ type SearchResult = {
     href: string;
 };
 
-type MailRow = {
+type AdminNotification = {
     id: number;
-    kind: string;
-    direction: string;
-    subject: string;
-    body: string;
-    from_email: string;
-    to_email: string;
-    status: string;
-    failed_reason: string | null;
+    title: string;
+    message: string;
+    type: string;
+    is_read: boolean;
+    related_id: number | null;
     created_at: string | null;
-    employee_name: string | null | undefined;
 };
 
 export default function AppSidebarLayout({
@@ -66,9 +63,10 @@ export default function AppSidebarLayout({
     const [collapsed, setCollapsed] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-    const [mailOpen, setMailOpen] = useState(false);
-    const [mailMessages, setMailMessages] = useState<MailRow[]>([]);
-    const [mailLoading, setMailLoading] = useState(false);
+    const [notificationOpen, setNotificationOpen] = useState(false);
+    const [notifications, setNotifications] = useState<AdminNotification[]>([]);
+    const [notificationLoading, setNotificationLoading] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
     const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
     const searchWrapRef = useRef<HTMLDivElement>(null);
 
@@ -87,6 +85,7 @@ export default function AppSidebarLayout({
                       { title: 'Employees', href: '/admin/employees', icon: Users },
                       { title: 'Items', href: '/admin/items', icon: Package },
                       { title: 'Month Plans', href: '/admin/plans', icon: ClipboardList },
+                      { title: 'Feedback', href: '/admin/mail-messages', icon: MessageSquareWarning },
                   ],
               },
               {
@@ -144,28 +143,51 @@ export default function AppSidebarLayout({
         return () => document.removeEventListener('mousedown', onDoc);
     }, []);
 
-    const loadMail = useCallback(async () => {
+    const loadNotifications = useCallback(async () => {
         if (!isAdmin) {
             return;
         }
-        setMailLoading(true);
+        setNotificationLoading(true);
         try {
-            const res = await fetch('/admin/mail-messages', {
+            const res = await fetch('/admin/notifications', {
                 headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
                 credentials: 'same-origin',
             });
-            const data = (await res.json()) as { messages?: MailRow[] };
-            setMailMessages(data.messages ?? []);
+            const data = (await res.json()) as { notifications?: AdminNotification[]; unread_count?: number };
+            setNotifications(data.notifications ?? []);
+            setUnreadCount(data.unread_count ?? 0);
         } finally {
-            setMailLoading(false);
+            setNotificationLoading(false);
         }
     }, [isAdmin]);
 
-    useEffect(() => {
-        if (mailOpen && isAdmin) {
-            void loadMail();
+    const markNotificationRead = useCallback(async (id: number) => {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '';
+        const res = await fetch(`/admin/notifications/${id}/read`, {
+            method: 'PATCH',
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+            },
+            credentials: 'same-origin',
+        });
+        if (!res.ok) {
+            return;
         }
-    }, [mailOpen, isAdmin, loadMail]);
+        const data = (await res.json()) as { unread_count?: number };
+        setNotifications((prev) =>
+            prev.map((notification) => (notification.id === id ? { ...notification, is_read: true } : notification)),
+        );
+        setUnreadCount(data.unread_count ?? 0);
+    }, []);
+
+    useEffect(() => {
+        if (notificationOpen && isAdmin) {
+            void loadNotifications();
+        }
+    }, [notificationOpen, isAdmin, loadNotifications]);
 
     return (
         <div className="min-h-screen bg-[#f6f7fb]">
@@ -262,60 +284,67 @@ export default function AppSidebarLayout({
                                         variant="ghost"
                                         size="icon"
                                         className="relative h-9 w-9 text-gray-600 hover:text-gray-900"
-                                        onClick={() => setMailOpen(true)}
-                                        aria-label="Email activity"
+                                        onClick={() => setNotificationOpen(true)}
+                                        aria-label="Notifications"
                                     >
                                         <Bell className="h-4 w-4" />
+                                        {unreadCount > 0 && (
+                                            <span className="absolute -right-1 -top-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+                                                {unreadCount > 9 ? '9+' : unreadCount}
+                                            </span>
+                                        )}
                                     </Button>
-                                    <Sheet open={mailOpen} onOpenChange={setMailOpen}>
+                                    <Sheet open={notificationOpen} onOpenChange={setNotificationOpen}>
                                     <SheetContent side="right" className="w-full gap-0 border-l border-gray-200 p-0 sm:max-w-lg">
                                         <SheetHeader className="border-b border-gray-100 px-6 py-5 text-left">
-                                            <SheetTitle className="text-lg font-semibold text-gray-900">Email activity</SheetTitle>
+                                            <SheetTitle className="text-lg font-semibold text-gray-900">Notification center</SheetTitle>
                                             <SheetDescription className="text-sm text-gray-500">
-                                                Messages sent to employees and alerts when employees use quota.
+                                                Live alerts from employee requests and admin activity.
                                             </SheetDescription>
                                         </SheetHeader>
                                         <div className="flex-1 overflow-y-auto px-4 py-4">
-                                            {mailLoading ? (
+                                            {notificationLoading ? (
                                                 <p className="text-sm text-gray-500">Loading…</p>
-                                            ) : mailMessages.length === 0 ? (
-                                                <p className="text-sm text-gray-500">No logged emails yet. Assign a plan or use an item to generate mail.</p>
+                                            ) : notifications.length === 0 ? (
+                                                <p className="text-sm text-gray-500">No notifications yet.</p>
                                             ) : (
                                                 <ul className="space-y-3">
-                                                    {mailMessages.map((m) => (
+                                                    {notifications.map((notification) => (
                                                         <li
-                                                            key={m.id}
-                                                            className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4 shadow-sm"
+                                                            key={notification.id}
+                                                            className={`rounded-2xl border p-4 shadow-sm transition ${
+                                                                notification.is_read
+                                                                    ? 'border-gray-100 bg-gray-50/70'
+                                                                    : 'border-emerald-200 bg-emerald-50/60'
+                                                            }`}
                                                         >
-                                                            <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                                                                <span
-                                                                    className={
-                                                                        m.direction === 'to_employee'
-                                                                            ? 'rounded-full bg-emerald-100 px-2 py-0.5 font-medium text-emerald-800'
-                                                                            : 'rounded-full bg-sky-100 px-2 py-0.5 font-medium text-sky-800'
-                                                                    }
-                                                                >
-                                                                    {m.direction === 'to_employee' ? 'To employee' : 'To admin'}
-                                                                </span>
-                                                                {m.employee_name && <span>· {m.employee_name}</span>}
-                                                                {m.status === 'failed' && (
-                                                                    <span className="font-medium text-red-600">Failed</span>
+                                                            <div className="flex items-start justify-between gap-2">
+                                                                <div>
+                                                                    <p className="text-sm font-semibold text-gray-900">{notification.title}</p>
+                                                                    <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-gray-600">{notification.message}</p>
+                                                                </div>
+                                                                {!notification.is_read && (
+                                                                    <span className="mt-1 inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
                                                                 )}
                                                             </div>
-                                                            <p className="mt-2 text-sm font-semibold text-gray-900">{m.subject}</p>
-                                                            <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-gray-600">{m.body}</p>
-                                                            <p className="mt-2 text-[11px] text-gray-400">
-                                                                {m.created_at
-                                                                    ? `${new Date(m.created_at).toLocaleString(undefined, {
-                                                                          dateStyle: 'medium',
-                                                                          timeStyle: 'short',
-                                                                      })} · `
-                                                                    : ''}
-                                                                {m.from_email} → {m.to_email}
-                                                            </p>
-                                                            {m.failed_reason && (
-                                                                <p className="mt-1 text-xs text-red-600">{m.failed_reason}</p>
-                                                            )}
+                                                            <div className="mt-3 flex items-center justify-between">
+                                                                <p className="text-[11px] text-gray-400">
+                                                                    {notification.created_at
+                                                                        ? new Date(notification.created_at).toLocaleString(undefined, {
+                                                                              dateStyle: 'medium',
+                                                                              timeStyle: 'short',
+                                                                          })
+                                                                        : 'Unknown date'}
+                                                                </p>
+                                                                <Button
+                                                                    size="sm"
+                                                                    variant={notification.is_read ? 'outline' : 'default'}
+                                                                    className="h-7 rounded-lg px-2.5 text-xs"
+                                                                    onClick={() => void markNotificationRead(notification.id)}
+                                                                >
+                                                                    {notification.is_read ? 'Read' : 'Mark as read'}
+                                                                </Button>
+                                                            </div>
                                                         </li>
                                                     ))}
                                                 </ul>

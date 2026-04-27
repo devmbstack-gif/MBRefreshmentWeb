@@ -5,6 +5,7 @@ use App\Http\Controllers\Web\Admin\DashboardController;
 use App\Http\Controllers\Web\Admin\EmployeeController;
 use App\Http\Controllers\Web\Admin\ItemController;
 use App\Http\Controllers\Web\Admin\MailMessageController;
+use App\Http\Controllers\Web\Admin\NotificationController;
 use App\Http\Controllers\Web\Admin\QuotaPlanController;
 use App\Http\Controllers\Web\Employee\EmployeeSearchController;
 use App\Http\Controllers\Web\Employee\QuotaController;
@@ -39,15 +40,22 @@ Route::middleware(['auth', 'role.admin'])
         Route::get('/items', [ItemController::class, 'index'])->name('items.index');
         Route::post('/items', [ItemController::class, 'store'])->name('items.store');
         Route::put('/items/{item}', [ItemController::class, 'update'])->name('items.update');
+        Route::patch('/items/{item}/toggle-status', [ItemController::class, 'toggleStatus'])->name('items.toggle-status');
         Route::delete('/items/{item}', [ItemController::class, 'destroy'])->name('items.destroy');
 
         Route::get('/plans', [QuotaPlanController::class, 'index'])->name('plans.index');
         Route::post('/plans', [QuotaPlanController::class, 'store'])->name('plans.store');
+        Route::put('/plans/{plan}', [QuotaPlanController::class, 'update'])->name('plans.update');
         Route::post('/plans/{plan}/assign', [QuotaPlanController::class, 'assign'])->name('plans.assign');
         Route::patch('/plans/{plan}/toggle-status', [QuotaPlanController::class, 'toggleStatus'])->name('plans.toggle-status');
+        Route::delete('/plans/{plan}', [QuotaPlanController::class, 'destroy'])->name('plans.destroy');
 
         Route::get('/search', AdminSearchController::class)->name('search');
         Route::get('/mail-messages', [MailMessageController::class, 'index'])->name('mail-messages.index');
+        Route::post('/mail-messages/{message}/reply', [MailMessageController::class, 'reply'])->name('mail-messages.reply');
+        Route::delete('/mail-messages/{message}', [MailMessageController::class, 'destroy'])->name('mail-messages.destroy');
+        Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+        Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     });
 
 Route::middleware(['auth', 'role.employee'])
@@ -58,6 +66,10 @@ Route::middleware(['auth', 'role.employee'])
         Route::post('/quota/{quota}/use', [QuotaController::class, 'use'])->name('quota.use');
         Route::get('/history', [QuotaController::class, 'history'])->name('history.index');
         Route::get('/notifications', [QuotaController::class, 'notifications'])->name('notifications.index');
+        Route::get('/feedback', [QuotaController::class, 'feedback'])->name('feedback.index');
+        Route::post('/feedback', [QuotaController::class, 'submitFeedback'])->name('feedback.store');
+        Route::post('/feedback/{message}/reply', [QuotaController::class, 'replyFeedback'])->name('feedback.reply');
+        Route::delete('/feedback/{message}', [QuotaController::class, 'deleteFeedback'])->name('feedback.destroy');
 
         Route::get('/search', EmployeeSearchController::class)->name('search');
     });

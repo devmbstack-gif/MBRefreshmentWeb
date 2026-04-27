@@ -143,7 +143,7 @@ export default function AdminDashboard({ stats, recent_usages, low_quota_employe
             <Head title="Admin Dashboard" />
 
             <div className="min-h-screen bg-[#f7f8fa]">
-                <div className="mx-auto max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+                <div className="mx-auto max-w-7xl space-y-6 px-3 py-6 sm:px-6 lg:px-8">
                     <div className="overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-r from-white via-emerald-50/60 to-cyan-50/60 shadow-sm">
                         <div className="flex flex-col gap-5 px-6 py-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
                             <div className="max-w-2xl">
@@ -168,7 +168,7 @@ export default function AdminDashboard({ stats, recent_usages, low_quota_employe
                             <h2 className="text-lg font-semibold text-slate-900">Operations snapshot</h2>
                             <p className="mt-1 text-sm text-slate-500">Quick actions and live activity from the system.</p>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                             <Link
                                 href="/admin/employees"
                                 className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-50"
@@ -222,7 +222,8 @@ export default function AdminDashboard({ stats, recent_usages, low_quota_employe
                                     </Link>
                                 </div>
                             ) : (
-                                <table className="w-full text-sm">
+                                <div className="overflow-x-auto">
+                                <table className="w-full min-w-[640px] text-sm">
                                     <thead>
                                         <tr className="border-b border-gray-100 bg-gray-50/60">
                                             <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-400">
@@ -273,6 +274,7 @@ export default function AdminDashboard({ stats, recent_usages, low_quota_employe
                                         ))}
                                     </tbody>
                                 </table>
+                                </div>
                             )}
                         </div>
 

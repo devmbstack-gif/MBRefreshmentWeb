@@ -4,7 +4,9 @@ import {
     ClipboardList,
     Clock,
     Coffee,
+    Flag,
     LayoutDashboard,
+    MessageSquareWarning,
     Package,
     Settings,
     Users,
@@ -37,6 +39,7 @@ const adminNavGroups: NavGroup[] = [
             { title: 'Employees', href: '/admin/employees', icon: Users },
             { title: 'Items', href: '/admin/items', icon: Package },
             { title: 'Month Plans', href: '/admin/plans', icon: ClipboardList },
+            { title: 'Feedback', href: '/admin/mail-messages', icon: MessageSquareWarning },
         ],
     },
     {
@@ -64,6 +67,7 @@ const employeeNavGroups: NavGroup[] = [
         label: 'Alerts',
         items: [
             { title: 'Notifications', href: '/employee/notifications', icon: Bell },
+            { title: 'Issue / Feature', href: '/employee/feedback', icon: Flag },
         ],
     },
 ];

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Item;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -99,8 +100,39 @@ class ItemController extends Controller
 
     public function destroy(Item $item): RedirectResponse
     {
-        $item->update(['is_active' => false]);
+        $hasPlanRelations = DB::table('quota_plan_items')
+            ->where('item_id', $item->id)
+            ->exists();
 
-        return redirect()->route('admin.items.index')->with('success', 'Item deactivated successfully.');
+        $hasQuotaRelations = DB::table('employee_quotas')
+            ->where('item_id', $item->id)
+            ->exists();
+
+        $hasUsageRelations = DB::table('quota_usages')
+            ->where('item_id', $item->id)
+            ->exists();
+
+        if ($hasPlanRelations || $hasQuotaRelations || $hasUsageRelations) {
+            return redirect()
+                ->route('admin.items.index')
+                ->with('error', 'This item cannot be deleted because it is linked to plan/quota usage history. Keep it deactivated instead.');
+        }
+
+        if ($item->image_url) {
+            Storage::disk('public')->delete(str_replace('/storage/', '', $item->image_url));
+        }
+
+        $item->delete();
+
+        return redirect()->route('admin.items.index')->with('success', 'Item deleted successfully.');
+    }
+
+    public function toggleStatus(Item $item): RedirectResponse
+    {
+        $item->update(['is_active' => ! $item->is_active]);
+
+        $status = $item->is_active ? 'activated' : 'deactivated';
+
+        return redirect()->route('admin.items.index')->with('success', "Item {$status} successfully.");
     }
 }

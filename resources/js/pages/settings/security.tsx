@@ -32,7 +32,6 @@ export default function Security() {
                     }}
                     resetOnError={[
                         'password',
-                        'password_confirmation',
                         'current_password',
                     ]}
                     resetOnSuccess
@@ -79,24 +78,6 @@ export default function Security() {
                                 />
 
                                 <InputError message={errors.password} />
-                            </div>
-
-                            <div className="grid gap-2">
-                                <Label htmlFor="password_confirmation">
-                                    Confirm password
-                                </Label>
-
-                                <PasswordInput
-                                    id="password_confirmation"
-                                    name="password_confirmation"
-                                    className="mt-1 block w-full"
-                                    autoComplete="new-password"
-                                    placeholder="Confirm password"
-                                />
-
-                                <InputError
-                                    message={errors.password_confirmation}
-                                />
                             </div>
 
                             <div className="flex items-center gap-4">
