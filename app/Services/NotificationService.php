@@ -50,6 +50,24 @@ class NotificationService
         );
     }
 
+    public function notifyQuotaUsed(Employee $employee, EmployeeQuota $quota, int $quantity): void
+    {
+        $quota->load('item');
+        $employee->loadMissing('user');
+        $targetUser = $employee->user;
+        if (! $targetUser) {
+            return;
+        }
+
+        $this->saveInApp(
+            user: $targetUser,
+            type: 'quota_used',
+            title: 'Quota Used',
+            message: "You used {$quantity} {$quota->item->name}. Remaining: {$quota->remaining_qty}.",
+            relatedId: $quota->id
+        );
+    }
+
     public function notifyQuotaExhausted(Employee $employee, EmployeeQuota $quota): void
     {
         $quota->load('item');
@@ -88,9 +106,12 @@ class NotificationService
 
     public function saveInApp(User $user, string $type, string $title, string $message, ?int $relatedId = null): void
     {
+        $allowedTypes = ['quota_assigned', 'quota_used', 'quota_low', 'quota_exhausted', 'quota_expired', 'general'];
+        $safeType = in_array($type, $allowedTypes, true) ? $type : 'general';
+
         AppNotification::create([
             'user_id' => $user->id,
-            'type' => $type,
+            'type' => $safeType,
             'title' => $title,
             'message' => $message,
             'is_read' => false,
@@ -102,7 +123,7 @@ class NotificationService
 
         if ($user->fcm_token !== null && $user->fcm_token !== '') {
             $this->fcmService->sendToUser($user, $title, $message, [
-                'type' => $type,
+                'type' => $safeType,
                 'related_id' => $relatedId !== null ? (string) $relatedId : '',
             ]);
         }

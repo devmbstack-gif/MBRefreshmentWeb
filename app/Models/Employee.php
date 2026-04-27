@@ -13,6 +13,7 @@ class Employee extends Model
         'employee_code',
         'department',
         'designation',
+        'personal_email',
         'joining_date',
         'fcm_token',
     ];

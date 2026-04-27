@@ -5,7 +5,10 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\AppNotification;
 use App\Models\EmployeeQuota;
+use App\Models\MailMessage;
 use App\Models\QuotaUsage;
+use App\Models\User;
+use App\Services\NotificationService;
 use App\Services\QuotaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,6 +27,20 @@ class EmployeeController extends Controller
         }
 
         return url($path);
+    }
+
+    private function buildAttachmentUrls(?array $attachments): array
+    {
+        if (! $attachments) {
+            return [];
+        }
+
+        return collect($attachments)
+            ->filter(fn ($path) => is_string($path) && $path !== '')
+            ->map(fn ($path) => $this->buildImageUrl($path))
+            ->filter()
+            ->values()
+            ->all();
     }
 
     public function quota(Request $request): JsonResponse
@@ -198,5 +215,101 @@ class EmployeeController extends Controller
             'avatar' => $user->avatar,
             'avatar_url' => $this->buildImageUrl($user->avatar),
         ]);
+    }
+
+    public function feedback(Request $request): JsonResponse
+    {
+        $employee = $request->user()->employee;
+
+        $messages = MailMessage::query()
+            ->where('employee_id', $employee?->id)
+            ->whereIn('kind', ['issue_report', 'feature_request'])
+            ->latest('created_at')
+            ->limit(80)
+            ->get();
+
+        $repliesByParent = MailMessage::query()
+            ->where('employee_id', $employee?->id)
+            ->where('kind', 'admin_reply')
+            ->whereNotNull('reply_to_id')
+            ->latest('created_at')
+            ->limit(120)
+            ->get()
+            ->map(fn ($m) => [
+                'id' => $m->id,
+                'reply_to_id' => $m->reply_to_id,
+                'subject' => $m->subject,
+                'body' => $m->body,
+                'attachments' => $this->buildAttachmentUrls($m->attachments),
+                'created_at' => $m->created_at?->toIso8601String(),
+            ])
+            ->groupBy('reply_to_id');
+
+        $feedback = $messages->map(fn ($m) => [
+            'id' => $m->id,
+            'kind' => $m->kind,
+            'subject' => $m->subject,
+            'body' => $m->body,
+            'attachments' => $this->buildAttachmentUrls($m->attachments),
+            'created_at' => $m->created_at?->toIso8601String(),
+            'replies' => ($repliesByParent->get($m->id) ?? collect())->values(),
+        ])->values();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Employee feedback thread',
+            'feedback' => $feedback,
+        ]);
+    }
+
+    public function submitFeedback(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'kind' => 'required|in:issue_report,feature_request',
+            'subject' => 'required|string|max:150',
+            'body' => 'required|string|max:5000',
+            'attachments' => 'nullable|array|max:5',
+            'attachments.*' => 'file|mimes:jpg,jpeg,png,webp|max:4096',
+        ]);
+
+        $user = $request->user();
+        $employee = $user->employee;
+        $toAddress = (string) config('mail.from.address');
+
+        $attachmentPaths = [];
+        if ($request->hasFile('attachments')) {
+            foreach ($request->file('attachments') as $file) {
+                $attachmentPaths[] = '/storage/'.$file->store('feedback-attachments', 'public');
+            }
+        }
+
+        $feedback = MailMessage::create([
+            'kind' => $validated['kind'],
+            'direction' => 'to_admin',
+            'subject' => $validated['subject'],
+            'body' => $validated['body'],
+            'from_email' => (string) $user->email,
+            'to_email' => $toAddress !== '' ? $toAddress : (string) $user->email,
+            'employee_id' => $employee?->id,
+            'status' => 'sent',
+            'attachments' => $attachmentPaths,
+        ]);
+
+        $title = $validated['kind'] === 'feature_request' ? 'New feature request' : 'New issue report';
+        $message = "{$user->name}: {$validated['subject']}";
+
+        User::query()
+            ->where('role', 'super_admin')
+            ->where('is_active', true)
+            ->each(function (User $admin) use ($title, $message, $feedback) {
+                app(NotificationService::class)->saveInApp($admin, 'general', $title, $message, $feedback->id);
+            });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Feedback sent successfully.',
+            'feedback_id' => $feedback->id,
+            'attachments' => $this->buildAttachmentUrls($attachmentPaths),
+        ], 201);
     }
 }

@@ -1,5 +1,5 @@
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-import { AlertTriangle, Box, Coffee, ImagePlus, Package2, Pencil, Plus, Trash2 } from 'lucide-react';
+import { AlertTriangle, Box, Coffee, ImagePlus, Package2, Pencil, Plus, Power, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type Item = {
     id: number;
@@ -47,7 +46,7 @@ const categoryColors: Record<string, string> = {
 };
 
 export default function AdminItems({ items }: Props) {
-    const { flash } = usePage<{ flash: { success?: string } }>().props;
+    const { flash } = usePage<{ flash: { success?: string; error?: string } }>().props;
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [editingItem, setEditingItem] = useState<Item | null>(null);
     const [deletingItem, setDeletingItem] = useState<Item | null>(null);
@@ -69,7 +68,7 @@ export default function AdminItems({ items }: Props) {
         <>
             <Head title="Items" />
 
-            <div className="space-y-6 p-6">
+            <div className="space-y-6 p-4 sm:p-6">
                 <div className="overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-r from-white via-emerald-50/70 to-cyan-50/70 shadow-sm">
                     <div className="flex flex-col gap-6 px-6 py-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
                         <div className="max-w-2xl">
@@ -90,7 +89,7 @@ export default function AdminItems({ items }: Props) {
                     </div>
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h2 className="text-lg font-semibold text-slate-900">Inventory Directory</h2>
                         <p className="mt-1 text-sm text-slate-500">
@@ -106,6 +105,11 @@ export default function AdminItems({ items }: Props) {
                 {flash?.success && (
                     <div className="rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
                         {flash.success}
+                    </div>
+                )}
+                {flash?.error && (
+                    <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                        {flash.error}
                     </div>
                 )}
 
@@ -196,23 +200,33 @@ export default function AdminItems({ items }: Props) {
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-3">
+                                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                                         <button
                                             onClick={() => setEditingItem(item)}
-                                            className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                                            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
                                         >
                                             <Pencil className="h-4 w-4" />
                                             Edit
                                         </button>
-                                        {item.is_active && (
-                                            <button
-                                                onClick={() => setDeletingItem(item)}
-                                                className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-rose-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-rose-600"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                                Deactivate
-                                            </button>
-                                        )}
+                                        <button
+                                            onClick={() => {
+                                                router.patch(`/admin/items/${item.id}/toggle-status`);
+                                            }}
+                                            className={`inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 ${
+                                                item.is_active ? 'bg-rose-500' : 'bg-emerald-500'
+                                            }`}
+                                        >
+                                            <Power className="h-4 w-4" />
+                                            {item.is_active ? 'Deactivate' : 'Activate'}
+                                        </button>
+                                        <button
+                                            onClick={() => setDeletingItem(item)}
+                                            disabled={item.is_active}
+                                            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300"
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                            Delete
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -262,9 +276,9 @@ function DeactivateItemModal({ item, onClose }: { item: Item; onClose: () => voi
         <Dialog open={true} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Deactivate item</DialogTitle>
+                    <DialogTitle>Delete item</DialogTitle>
                     <DialogDescription>
-                        Deactivating "{item.name}" will hide it from new quota plans, but keep its existing history for future APIs and reporting.
+                        "{item.name}" will be deleted permanently. Deactivate the item first to avoid accidental removal.
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="gap-2">
@@ -278,7 +292,7 @@ function DeactivateItemModal({ item, onClose }: { item: Item; onClose: () => voi
                             onClose();
                         }}
                     >
-                        Deactivate
+                        Delete permanently
                     </Button>
                 </DialogFooter>
             </DialogContent>

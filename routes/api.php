@@ -20,6 +20,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/history', [EmployeeController::class, 'history']);
         Route::get('/notifications', [EmployeeController::class, 'notifications']);
         Route::post('/notifications/{notification}/read', [EmployeeController::class, 'markNotificationAsRead']);
+        Route::get('/feedback', [EmployeeController::class, 'feedback']);
+        Route::post('/feedback', [EmployeeController::class, 'submitFeedback']);
         Route::post('/profile/avatar', [EmployeeController::class, 'updateProfileAvatar']);
     });
 });

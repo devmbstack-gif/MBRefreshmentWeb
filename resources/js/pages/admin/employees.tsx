@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import PasswordInput from '@/components/password-input';
 
 type Employee = {
     id: number;
@@ -23,6 +24,7 @@ type Employee = {
     employee_code: string;
     department: string | null;
     designation: string | null;
+    personal_email: string | null;
     joining_date: string | null;
     is_active: boolean;
 };
@@ -69,7 +71,7 @@ export default function AdminEmployees({ employees }: Props) {
         <>
             <Head title="Employees" />
 
-            <div className="space-y-6 p-6">
+            <div className="space-y-6 p-4 sm:p-6">
                 <div className="overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-r from-white via-emerald-50/70 to-cyan-50/70 shadow-sm">
                     <div className="flex flex-col gap-6 px-6 py-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
                         <div className="max-w-2xl">
@@ -89,7 +91,7 @@ export default function AdminEmployees({ employees }: Props) {
                     </div>
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
                         <h2 className="text-lg font-semibold text-slate-900">Employee Directory</h2>
                         <p className="mt-1 text-sm text-slate-500">
@@ -132,7 +134,7 @@ export default function AdminEmployees({ employees }: Props) {
                                 <div className="h-24 bg-emerald-500" />
                                 <div className="relative px-5 pb-5">
                                     <div className="flex items-start justify-between">
-                                        <div className="-mt-8 flex items-center gap-3">
+                                        <div className="-mt-8 flex min-w-0 items-center gap-3">
                                             {employee.avatar ? (
                                                 <img
                                                     src={employee.avatar}
@@ -144,9 +146,9 @@ export default function AdminEmployees({ employees }: Props) {
                                                     {getEmployeeInitials(employee.name)}
                                                 </div>
                                             )}
-                                            <div className="pt-8">
-                                                <h3 className="text-lg font-semibold text-slate-900">{employee.name}</h3>
-                                                <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-400">{employee.employee_code}</p>
+                                            <div className="min-w-0 pt-8">
+                                                <h3 className="truncate text-lg font-semibold text-slate-900">{employee.name}</h3>
+                                                <p className="truncate text-xs font-medium uppercase tracking-[0.2em] text-slate-400">{employee.employee_code}</p>
                                             </div>
                                         </div>
                                         <span
@@ -159,18 +161,17 @@ export default function AdminEmployees({ employees }: Props) {
                                     </div>
 
                                     <div className="mt-5 space-y-3">
-                                        <EmployeeInfoRow icon={<Mail className="h-4 w-4" />} label="Email" value={employee.email} />
+                                        <EmployeeInfoRow icon={<Mail className="h-4 w-4" />} label="Company Email" value={employee.email} />
+                                        <EmployeeInfoRow icon={<Mail className="h-4 w-4" />} label="Personal Email" value={employee.personal_email ?? 'Not added'} />
                                         <EmployeeInfoRow icon={<Briefcase className="h-4 w-4" />} label="Department" value={employee.department ?? 'Not assigned'} />
-                                        <EmployeeInfoRow icon={<UserRound className="h-4 w-4" />} label="Designation" value={employee.designation ?? 'Not added'} />
+                                        <EmployeeInfoRow icon={<UserRound className="h-4 w-4" />} label="Job Role" value={employee.designation ?? 'Not added'} />
                                         <EmployeeInfoRow icon={<CalendarDays className="h-4 w-4" />} label="Joining date" value={employee.joining_date || 'Not added'} />
                                     </div>
 
-                                    <div className="mt-5 flex items-center gap-3">
+                                    <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
                                         <button
                                             onClick={() => setEditingEmployee(employee)}
-                                            className={`inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 ${
-                                                employee.is_active ? 'flex-1' : 'flex-[0.9]'
-                                            }`}
+                                            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 sm:col-span-1"
                                             title="Edit Employee"
                                         >
                                             <Pencil className="h-4 w-4" />
@@ -178,7 +179,7 @@ export default function AdminEmployees({ employees }: Props) {
                                         </button>
                                         <button
                                             onClick={() => setStatusEmployee(employee)}
-                                            className={`inline-flex flex-1 items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 ${
+                                            className={`inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium text-white transition hover:opacity-90 sm:col-span-1 ${
                                                 employee.is_active ? 'bg-rose-500' : 'bg-emerald-500'
                                             }`}
                                             title={employee.is_active ? 'Deactivate' : 'Activate'}
@@ -186,16 +187,15 @@ export default function AdminEmployees({ employees }: Props) {
                                             <Power className="h-4 w-4" />
                                             {employee.is_active ? 'Deactivate' : 'Activate'}
                                         </button>
-                                        {!employee.is_active && (
-                                            <button
-                                                onClick={() => setDeleteEmployee(employee)}
-                                                className="inline-flex flex-[0.8] items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800"
-                                                title="Delete Employee"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                                Delete
-                                            </button>
-                                        )}
+                                        <button
+                                            onClick={() => setDeleteEmployee(employee)}
+                                            disabled={employee.is_active}
+                                            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300 sm:col-span-1"
+                                            title={employee.is_active ? 'Deactivate before deleting' : 'Delete Employee'}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                            Delete
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -386,11 +386,11 @@ function CreateEmployeeModal({
         name: '',
         email: '',
         password: '',
-        password_confirmation: '',
         avatar: null as File | null,
         employee_code: '',
         department: '',
         designation: '',
+        personal_email: '',
         joining_date: '',
     });
 
@@ -440,7 +440,7 @@ function CreateEmployeeModal({
                             />
                         </FormField>
 
-                        <FormField label="Email Address" error={form.errors.email}>
+                        <FormField label="Company Email" error={form.errors.email}>
                             <Input
                                 type="email"
                                 value={form.data.email}
@@ -449,21 +449,20 @@ function CreateEmployeeModal({
                             />
                         </FormField>
 
-                        <FormField label="Password" error={form.errors.password}>
+                        <FormField label="Personal Email" error={form.errors.personal_email}>
                             <Input
-                                type="password"
-                                value={form.data.password}
-                                onChange={(e) => form.setData('password', e.target.value)}
-                                placeholder="Min 8 characters"
+                                type="email"
+                                value={form.data.personal_email}
+                                onChange={(e) => form.setData('personal_email', e.target.value)}
+                                placeholder="ali.personal@gmail.com"
                             />
                         </FormField>
 
-                        <FormField label="Confirm Password" error={form.errors.password_confirmation}>
-                            <Input
-                                type="password"
-                                value={form.data.password_confirmation}
-                                onChange={(e) => form.setData('password_confirmation', e.target.value)}
-                                placeholder="Repeat password"
+                        <FormField label="Password" error={form.errors.password}>
+                            <PasswordInput
+                                value={form.data.password}
+                                onChange={(e) => form.setData('password', e.target.value)}
+                                placeholder="Min 8 characters"
                             />
                         </FormField>
                         </div>
@@ -476,7 +475,7 @@ function CreateEmployeeModal({
                             description="Basic company information for this employee."
                         />
                         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                        <FormField label="Employee Code" error={form.errors.employee_code}>
+                        <FormField label="Employee ID" error={form.errors.employee_code}>
                             <Input
                                 value={form.data.employee_code}
                                 onChange={(e) => form.setData('employee_code', e.target.value)}
@@ -500,7 +499,7 @@ function CreateEmployeeModal({
                             </>
                         </FormField>
 
-                        <FormField label="Designation" error={form.errors.designation}>
+                        <FormField label="Job Role" error={form.errors.designation}>
                             <Input
                                 value={form.data.designation}
                                 onChange={(e) => form.setData('designation', e.target.value)}
@@ -545,11 +544,11 @@ function EditEmployeeModal({
         name: employee.name,
         email: employee.email,
         password: '',
-        password_confirmation: '',
         avatar: null as File | null,
         employee_code: employee.employee_code,
         department: employee.department ?? '',
         designation: employee.designation ?? '',
+        personal_email: employee.personal_email ?? '',
         joining_date: employee.joining_date ?? '',
     });
 
@@ -597,7 +596,7 @@ function EditEmployeeModal({
                             />
                         </FormField>
 
-                        <FormField label="Email Address" error={form.errors.email}>
+                        <FormField label="Company Email" error={form.errors.email}>
                             <Input
                                 type="email"
                                 value={form.data.email}
@@ -605,21 +604,19 @@ function EditEmployeeModal({
                             />
                         </FormField>
 
-                        <FormField label="New Password (optional)" error={form.errors.password}>
+                        <FormField label="Personal Email" error={form.errors.personal_email}>
                             <Input
-                                type="password"
-                                value={form.data.password}
-                                onChange={(e) => form.setData('password', e.target.value)}
-                                placeholder="Leave blank to keep current"
+                                type="email"
+                                value={form.data.personal_email}
+                                onChange={(e) => form.setData('personal_email', e.target.value)}
                             />
                         </FormField>
 
-                        <FormField label="Confirm New Password" error={form.errors.password_confirmation}>
-                            <Input
-                                type="password"
-                                value={form.data.password_confirmation}
-                                onChange={(e) => form.setData('password_confirmation', e.target.value)}
-                                placeholder="Leave blank to keep current"
+                        <FormField label="New Password" error={form.errors.password}>
+                            <PasswordInput
+                                value={form.data.password}
+                                onChange={(e) => form.setData('password', e.target.value)}
+                                placeholder="Minimum 8 characters"
                             />
                         </FormField>
                         </div>
@@ -632,7 +629,7 @@ function EditEmployeeModal({
                             description="Keep company information accurate and up to date."
                         />
                         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                        <FormField label="Employee Code" error={form.errors.employee_code}>
+                        <FormField label="Employee ID" error={form.errors.employee_code}>
                             <Input
                                 value={form.data.employee_code}
                                 onChange={(e) => form.setData('employee_code', e.target.value)}
@@ -655,7 +652,7 @@ function EditEmployeeModal({
                             </>
                         </FormField>
 
-                        <FormField label="Designation" error={form.errors.designation}>
+                        <FormField label="Job Role" error={form.errors.designation}>
                             <Input
                                 value={form.data.designation}
                                 onChange={(e) => form.setData('designation', e.target.value)}

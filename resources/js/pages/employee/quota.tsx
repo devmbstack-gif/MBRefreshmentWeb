@@ -22,6 +22,7 @@ type Quota = {
     id: number;
     item_name: string;
     item_category: string;
+    item_image_url?: string | null;
     plan_title: string;
     plan_ends_at: string;
     total_qty: number;
@@ -41,11 +42,13 @@ const categoryConfig: Record<string, { emoji: string; bg: string; pill: string; 
     beverage: { emoji: '☕', bg: 'from-amber-400 to-amber-600', pill: 'bg-amber-500', label: 'Beverage' },
     snack: { emoji: '🍫', bg: 'from-rose-400 to-rose-600', pill: 'bg-rose-500', label: 'Snack' },
     drink: { emoji: '🥤', bg: 'from-blue-400 to-blue-600', pill: 'bg-blue-500', label: 'Drink' },
+    drinks: { emoji: '🥤', bg: 'from-blue-400 to-blue-600', pill: 'bg-blue-500', label: 'Drinks' },
     other: { emoji: '📦', bg: 'from-slate-400 to-slate-600', pill: 'bg-slate-500', label: 'Other' },
 };
 
 function getCatConfig(category: string) {
-    return categoryConfig[category?.toLowerCase()] ?? categoryConfig.other;
+    const normalized = category?.toLowerCase().trim();
+    return categoryConfig[normalized] ?? categoryConfig.other;
 }
 
 export default function EmployeeQuota({ quotas, employee_name }: Props) {
@@ -101,12 +104,17 @@ export default function EmployeeQuota({ quotas, employee_name }: Props) {
                             Tap &quot;Use 1&quot; when you take an item from your allowance.
                         </p>
                     </div>
-                    <Button variant="outline" className="gap-2 self-start rounded-xl border-slate-200 shadow-sm" asChild>
-                        <Link href="/employee/history">
-                            <History className="h-4 w-4" />
-                            View history
-                        </Link>
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" className="gap-2 self-start rounded-xl border-slate-200 shadow-sm" asChild>
+                            <Link href="/employee/history">
+                                <History className="h-4 w-4" />
+                                View history
+                            </Link>
+                        </Button>
+                        <Button variant="outline" className="gap-2 self-start rounded-xl border-slate-200 shadow-sm" asChild>
+                            <Link href="/employee/feedback">Issue / Feature</Link>
+                        </Button>
+                    </div>
                 </div>
 
                 {flash?.success && (
@@ -162,9 +170,17 @@ export default function EmployeeQuota({ quotas, employee_name }: Props) {
                                 <div
                                     className={`flex flex-col items-center justify-center rounded-2xl bg-gradient-to-br py-8 ${getCatConfig(confirmQuota.item_category).bg}`}
                                 >
-                                    <span className="text-5xl drop-shadow-md" aria-hidden>
-                                        {getCatConfig(confirmQuota.item_category).emoji}
-                                    </span>
+                                    {confirmQuota.item_image_url ? (
+                                        <img
+                                            src={confirmQuota.item_image_url}
+                                            alt={confirmQuota.item_name}
+                                            className="h-20 w-20 rounded-2xl border border-white/30 object-cover shadow"
+                                        />
+                                    ) : (
+                                        <span className="text-5xl drop-shadow-md" aria-hidden>
+                                            {getCatConfig(confirmQuota.item_category).emoji}
+                                        </span>
+                                    )}
                                     <p className="mt-3 text-lg font-bold text-white">{confirmQuota.item_name}</p>
                                     <p className="text-sm text-white/90">{confirmQuota.plan_title}</p>
                                 </div>
@@ -217,9 +233,17 @@ function QuotaCard({ quota, onUse }: { quota: Quota; onUse?: () => void }) {
     return (
         <div className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-emerald-200/60 hover:shadow-md">
             <div className={`relative flex h-40 items-center justify-center bg-gradient-to-br ${cat.bg}`}>
-                <span className="text-6xl drop-shadow-lg transition-transform duration-300 group-hover:scale-105" aria-hidden>
-                    {cat.emoji}
-                </span>
+                {quota.item_image_url ? (
+                    <img
+                        src={quota.item_image_url}
+                        alt={quota.item_name}
+                        className="h-20 w-20 rounded-2xl border border-white/30 object-cover shadow-lg transition-transform duration-300 group-hover:scale-105"
+                    />
+                ) : (
+                    <span className="text-6xl drop-shadow-lg transition-transform duration-300 group-hover:scale-105" aria-hidden>
+                        {cat.emoji}
+                    </span>
+                )}
                 <span
                     className={`absolute left-3 top-3 inline-flex items-center rounded-full ${cat.pill} px-2.5 py-1 text-xs font-semibold text-white shadow`}
                 >

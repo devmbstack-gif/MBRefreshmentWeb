@@ -21,11 +21,12 @@ class EmployeeController extends Controller
             'name' => 'required|string|max:100',
             'email' => 'required|email|unique:users,email,' . ($employee?->user_id ?? 'NULL'),
             'password' => $employee
-                ? ['nullable', 'confirmed', Password::min(8)]
-                : ['required', 'confirmed', Password::min(8)],
+                ? ['required', Password::min(8)]
+                : ['required', Password::min(8)],
             'employee_code' => 'required|string|max:50|unique:employees,employee_code,' . ($employee?->id ?? 'NULL'),
             'department' => 'nullable|string|max:100',
             'designation' => 'nullable|string|max:100',
+            'personal_email' => 'nullable|email|max:150',
             'joining_date' => 'nullable|date',
             'avatar' => 'nullable|file|mimes:jpg,jpeg,png,webp|max:2048',
         ];
@@ -54,6 +55,7 @@ class EmployeeController extends Controller
                 'employee_code' => $employee->employee_code,
                 'department' => $employee->department,
                 'designation' => $employee->designation,
+                'personal_email' => $employee->personal_email,
                 'joining_date' => $employee->joining_date?->format('Y-m-d'),
                 'is_active' => $employee->user->is_active,
             ]);
@@ -86,6 +88,7 @@ class EmployeeController extends Controller
                 'employee_code' => $request->employee_code,
                 'department' => $request->department,
                 'designation' => $request->designation,
+                'personal_email' => $request->personal_email,
                 'joining_date' => $request->joining_date,
             ]);
         });
@@ -103,9 +106,7 @@ class EmployeeController extends Controller
                 'email' => $request->email,
             ];
 
-            if ($request->filled('password')) {
-                $userData['password'] = $request->password;
-            }
+            $userData['password'] = $request->password;
 
             if ($request->file('avatar')) {
                 if ($employee->user->avatar) {
@@ -121,6 +122,7 @@ class EmployeeController extends Controller
                 'employee_code' => $request->employee_code,
                 'department' => $request->department,
                 'designation' => $request->designation,
+                'personal_email' => $request->personal_email,
                 'joining_date' => $request->joining_date,
             ]);
         });
