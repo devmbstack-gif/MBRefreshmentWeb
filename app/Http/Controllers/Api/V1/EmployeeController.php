@@ -75,43 +75,50 @@ class EmployeeController extends Controller
         ]);
     }
 
-    public function useQuota(Request $request, EmployeeQuota $quota, QuotaService $quotaService): JsonResponse
+    public function useQuota(Request $request, int $quota, QuotaService $quotaService): JsonResponse
     {
         $validated = $request->validate([
             'quantity' => ['nullable', 'integer', 'min:1', 'max:10'],
         ]);
 
         $employee = $request->user()->employee;
-        if ($quota->employee_id !== $employee->id) {
+        $employeeQuota = EmployeeQuota::query()
+            ->where('id', $quota)
+            ->where('employee_id', $employee->id)
+            ->first();
+
+        if (! $employeeQuota) {
             return response()->json([
-                'message' => 'This quota does not belong to you.',
-            ], 403);
+                'status' => false,
+                'message' => 'Quota not found for this employee.',
+            ], 404);
         }
 
         $quantity = $validated['quantity'] ?? 1;
 
         try {
-            $quotaService->useQuota($quota, $quantity);
+            $quotaService->useQuota($employeeQuota, $quantity);
         } catch (\Exception $e) {
             return response()->json([
+                'status' => false,
                 'message' => $e->getMessage(),
             ], 422);
         }
 
-        $quota->load(['item', 'plan']);
+        $employeeQuota->load(['item', 'plan']);
 
         return response()->json([
             'status' => true,
             'message' => 'Order Placed Successfully',
             'quota' => [
-                'id' => $quota->id,
-                'item_name' => $quota->item->name,
-                'item_image_url' => $this->buildImageUrl($quota->item->image_url),
-                'plan_title' => $quota->plan->title,
-                'total_qty' => $quota->total_qty,
-                'used_qty' => $quota->used_qty,
-                'remaining_qty' => $quota->remaining_qty,
-                'status' => $quota->status,
+                'id' => $employeeQuota->id,
+                'item_name' => $employeeQuota->item->name,
+                'item_image_url' => $this->buildImageUrl($employeeQuota->item->image_url),
+                'plan_title' => $employeeQuota->plan->title,
+                'total_qty' => $employeeQuota->total_qty,
+                'used_qty' => $employeeQuota->used_qty,
+                'remaining_qty' => $employeeQuota->remaining_qty,
+                'status' => $employeeQuota->status,
             ],
         ]);
     }
