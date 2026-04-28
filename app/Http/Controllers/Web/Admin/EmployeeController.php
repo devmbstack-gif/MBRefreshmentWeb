@@ -21,7 +21,7 @@ class EmployeeController extends Controller
             'name' => 'required|string|max:100',
             'email' => 'required|email|unique:users,email,'.($employee?->user_id ?? 'NULL'),
             'password' => $employee
-                ? ['required', Password::min(8)]
+                ? ['nullable', Password::min(8)]
                 : ['required', Password::min(8)],
             'employee_code' => 'required|string|max:50|unique:employees,employee_code,'.($employee?->id ?? 'NULL'),
             'department' => 'nullable|string|max:100',
@@ -106,7 +106,9 @@ class EmployeeController extends Controller
                 'email' => $request->email,
             ];
 
-            $userData['password'] = $request->password;
+            if ($request->filled('password')) {
+                $userData['password'] = $request->password;
+            }
 
             if ($request->file('avatar')) {
                 if ($employee->user->avatar) {
