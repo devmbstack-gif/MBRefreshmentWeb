@@ -23,14 +23,18 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import type { NavGroup } from '@/types';
 import { edit as profileEdit } from '@/routes/profile';
+import type { NavGroup } from '@/types';
 
 const adminNavGroups: NavGroup[] = [
     {
         label: 'Home',
         items: [
-            { title: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
+            {
+                title: 'Dashboard',
+                href: '/admin/dashboard',
+                icon: LayoutDashboard,
+            },
         ],
     },
     {
@@ -39,23 +43,23 @@ const adminNavGroups: NavGroup[] = [
             { title: 'Employees', href: '/admin/employees', icon: Users },
             { title: 'Items', href: '/admin/items', icon: Package },
             { title: 'Month Plans', href: '/admin/plans', icon: ClipboardList },
-            { title: 'Feedback', href: '/admin/mail-messages', icon: MessageSquareWarning },
+            {
+                title: 'Feedback',
+                href: '/admin/mail-messages',
+                icon: MessageSquareWarning,
+            },
         ],
     },
     {
         label: 'Settings',
-        items: [
-            { title: 'Settings', href: profileEdit(), icon: Settings },
-        ],
+        items: [{ title: 'Settings', href: profileEdit(), icon: Settings }],
     },
 ];
 
 const employeeNavGroups: NavGroup[] = [
     {
         label: 'Home',
-        items: [
-            { title: 'My Quota', href: '/employee/quota', icon: Coffee },
-        ],
+        items: [{ title: 'My Quota', href: '/employee/quota', icon: Coffee }],
     },
     {
         label: 'Activity',
@@ -66,14 +70,23 @@ const employeeNavGroups: NavGroup[] = [
     {
         label: 'Alerts',
         items: [
-            { title: 'Notifications', href: '/employee/notifications', icon: Bell },
-            { title: 'Issue / Feature', href: '/employee/feedback', icon: Flag },
+            {
+                title: 'Notifications',
+                href: '/employee/notifications',
+                icon: Bell,
+            },
+            {
+                title: 'Issue / Feature',
+                href: '/employee/feedback',
+                icon: Flag,
+            },
         ],
     },
 ];
 
 export function AppSidebar() {
-    const { auth } = usePage<{ auth: { user: { role: string } | null } }>().props;
+    const { auth } = usePage<{ auth: { user: { role: string } | null } }>()
+        .props;
 
     const isAdmin = auth.user?.role === 'super_admin';
     const navGroups = isAdmin ? adminNavGroups : employeeNavGroups;

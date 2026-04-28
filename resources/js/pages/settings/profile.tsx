@@ -5,10 +5,10 @@ import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileCo
 import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useInitials } from '@/hooks/use-initials';
 import { edit } from '@/routes/profile';
 import { send } from '@/routes/verification';
@@ -30,6 +30,7 @@ export default function Profile({
             if (prev) {
                 URL.revokeObjectURL(prev);
             }
+
             return null;
         });
         avatarForm.setData('avatar', null);
@@ -37,6 +38,7 @@ export default function Profile({
 
     function handleAvatarFileChange(file: File | null) {
         clearAvatarSelection();
+
         if (file) {
             setAvatarPreview(URL.createObjectURL(file));
             avatarForm.setData('avatar', file);
@@ -45,9 +47,11 @@ export default function Profile({
 
     function submitAvatar(e: React.FormEvent) {
         e.preventDefault();
+
         if (!avatarForm.data.avatar) {
             return;
         }
+
         avatarForm.post('/settings/profile/avatar', {
             forceFormData: true,
             preserveScroll: true,
@@ -71,12 +75,19 @@ export default function Profile({
                         title="Profile photo"
                         description="Upload a picture shown in the app and on admin views"
                     />
-                    <form onSubmit={submitAvatar} className="flex flex-col gap-4 sm:flex-row sm:items-end">
+                    <form
+                        onSubmit={submitAvatar}
+                        className="flex flex-col gap-4 sm:flex-row sm:items-end"
+                    >
                         <div className="flex items-center gap-4">
                             <Avatar className="h-20 w-20 rounded-2xl border">
                                 {avatarPreview || auth.user.avatar ? (
                                     <AvatarImage
-                                        src={avatarPreview ?? (auth.user.avatar as string) ?? undefined}
+                                        src={
+                                            avatarPreview ??
+                                            (auth.user.avatar as string) ??
+                                            undefined
+                                        }
                                         alt=""
                                         className="object-cover"
                                     />
@@ -86,7 +97,10 @@ export default function Profile({
                                 </AvatarFallback>
                             </Avatar>
                             <div className="space-y-2">
-                                <Label htmlFor="profile-avatar" className="sr-only">
+                                <Label
+                                    htmlFor="profile-avatar"
+                                    className="sr-only"
+                                >
                                     Profile image
                                 </Label>
                                 <div className="flex flex-wrap items-center gap-2">
@@ -98,20 +112,39 @@ export default function Profile({
                                             type="file"
                                             accept="image/jpeg,image/png,image/webp,image/jpg"
                                             className="sr-only"
-                                            onChange={(e) => handleAvatarFileChange(e.target.files?.[0] ?? null)}
+                                            onChange={(e) =>
+                                                handleAvatarFileChange(
+                                                    e.target.files?.[0] ?? null,
+                                                )
+                                            }
                                         />
                                     </label>
                                     {avatarPreview && (
-                                        <Button type="button" variant="ghost" size="sm" onClick={clearAvatarSelection}>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={clearAvatarSelection}
+                                        >
                                             Clear
                                         </Button>
                                     )}
                                 </div>
-                                <InputError message={avatarForm.errors.avatar} />
+                                <InputError
+                                    message={avatarForm.errors.avatar}
+                                />
                             </div>
                         </div>
-                        <Button type="submit" disabled={!avatarForm.data.avatar || avatarForm.processing} data-test="update-avatar-button">
-                            {avatarForm.processing ? 'Uploading...' : 'Save photo'}
+                        <Button
+                            type="submit"
+                            disabled={
+                                !avatarForm.data.avatar || avatarForm.processing
+                            }
+                            data-test="update-avatar-button"
+                        >
+                            {avatarForm.processing
+                                ? 'Uploading...'
+                                : 'Save photo'}
                         </Button>
                     </form>
                 </div>

@@ -30,10 +30,7 @@ export default function Security() {
                     options={{
                         preserveScroll: true,
                     }}
-                    resetOnError={[
-                        'password',
-                        'current_password',
-                    ]}
+                    resetOnError={['password', 'current_password']}
                     resetOnSuccess
                     onError={(errors) => {
                         if (errors.password) {

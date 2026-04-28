@@ -1,5 +1,13 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { ArrowRight, BarChart3, Bell, Clock, Coffee, Shield, Users } from 'lucide-react';
+import {
+    ArrowRight,
+    BarChart3,
+    Bell,
+    Clock,
+    Coffee,
+    Shield,
+    Users,
+} from 'lucide-react';
 import { login, dashboard } from '@/routes';
 
 type AuthUser = {
@@ -18,12 +26,15 @@ export default function Welcome() {
             <Head title="Employee Refreshment Portal" />
 
             <div className="min-h-screen bg-background">
-
                 {/* Top Navigation Bar */}
                 <header className="sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-sm">
                     <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
                         <div className="flex items-center">
-                            <img src="/common/logo.png" alt="Bs Refreshment" className="h-40 w-auto object-contain" />
+                            <img
+                                src="/common/logo.png"
+                                alt="Bs Refreshment"
+                                className="h-40 w-auto object-contain"
+                            />
                         </div>
 
                         <Link
@@ -46,19 +57,24 @@ export default function Welcome() {
                     <h1 className="mb-6 text-5xl font-bold tracking-tight text-foreground lg:text-6xl">
                         Your Daily Refreshments,
                         <br />
-                        <span className="text-primary">Tracked &amp; Managed.</span>
+                        <span className="text-primary">
+                            Tracked &amp; Managed.
+                        </span>
                     </h1>
 
                     <p className="mx-auto mb-10 max-w-2xl text-xl text-muted-foreground">
-                        Admin creates monthly quota plans — assigns lunches, teas, and snacks to
-                        employees — everyone tracks and uses their allowance with ease.
+                        Admin creates monthly quota plans — assigns lunches,
+                        teas, and snacks to employees — everyone tracks and uses
+                        their allowance with ease.
                     </p>
 
                     <Link
                         href={isLoggedIn ? dashboard() : login()}
                         className="inline-flex items-center gap-2 rounded-lg bg-primary px-8 py-3.5 text-base font-medium text-primary-foreground transition-opacity hover:opacity-90"
                     >
-                        {isLoggedIn ? 'Go to Dashboard' : 'Sign In to Dashboard'}
+                        {isLoggedIn
+                            ? 'Go to Dashboard'
+                            : 'Sign In to Dashboard'}
                         <ArrowRight className="h-5 w-5" />
                     </Link>
 
@@ -66,18 +82,31 @@ export default function Welcome() {
                     <div className="mx-auto mt-16 max-w-2xl overflow-hidden rounded-2xl border border-border bg-card shadow-lg">
                         <div className="border-b border-border bg-background px-6 py-4">
                             <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium text-foreground">July 2025 — Monthly Refreshment Plan</span>
-                                <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">Active</span>
+                                <span className="text-sm font-medium text-foreground">
+                                    July 2025 — Monthly Refreshment Plan
+                                </span>
+                                <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                                    Active
+                                </span>
                             </div>
                         </div>
                         <div className="divide-y divide-border">
                             {previewItems.map((item) => (
-                                <div key={item.name} className="flex items-center justify-between px-6 py-4">
+                                <div
+                                    key={item.name}
+                                    className="flex items-center justify-between px-6 py-4"
+                                >
                                     <div className="flex items-center gap-3">
-                                        <span className="text-xl">{item.emoji}</span>
+                                        <span className="text-xl">
+                                            {item.emoji}
+                                        </span>
                                         <div>
-                                            <p className="text-sm font-medium text-foreground">{item.name}</p>
-                                            <p className="text-xs text-muted-foreground">{item.category}</p>
+                                            <p className="text-sm font-medium text-foreground">
+                                                {item.name}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {item.category}
+                                            </p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-4">
@@ -89,7 +118,9 @@ export default function Welcome() {
                                             <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                                                 <div
                                                     className="h-full rounded-full bg-primary transition-all"
-                                                    style={{ width: `${(item.used / item.total) * 100}%` }}
+                                                    style={{
+                                                        width: `${(item.used / item.total) * 100}%`,
+                                                    }}
                                                 />
                                             </div>
                                         </div>
@@ -107,9 +138,12 @@ export default function Welcome() {
                 <section className="border-t border-border bg-card">
                     <div className="mx-auto max-w-6xl px-6 py-20">
                         <div className="mb-14 text-center">
-                            <h2 className="mb-4 text-3xl font-bold text-foreground">Everything You Need</h2>
+                            <h2 className="mb-4 text-3xl font-bold text-foreground">
+                                Everything You Need
+                            </h2>
                             <p className="text-muted-foreground">
-                                Built for software houses to manage employee refreshments without spreadsheets.
+                                Built for software houses to manage employee
+                                refreshments without spreadsheets.
                             </p>
                         </div>
 
@@ -122,8 +156,12 @@ export default function Welcome() {
                                     <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
                                         <feature.icon className="h-5 w-5 text-primary" />
                                     </div>
-                                    <h3 className="mb-2 text-base font-semibold text-foreground">{feature.title}</h3>
-                                    <p className="text-sm leading-relaxed text-muted-foreground">{feature.description}</p>
+                                    <h3 className="mb-2 text-base font-semibold text-foreground">
+                                        {feature.title}
+                                    </h3>
+                                    <p className="text-sm leading-relaxed text-muted-foreground">
+                                        {feature.description}
+                                    </p>
                                 </div>
                             ))}
                         </div>
@@ -133,8 +171,13 @@ export default function Welcome() {
                 {/* How It Works Section */}
                 <section className="mx-auto max-w-6xl px-6 py-20">
                     <div className="mb-14 text-center">
-                        <h2 className="mb-4 text-3xl font-bold text-foreground">How It Works</h2>
-                        <p className="text-muted-foreground">Simple three-step process from plan creation to daily use.</p>
+                        <h2 className="mb-4 text-3xl font-bold text-foreground">
+                            How It Works
+                        </h2>
+                        <p className="text-muted-foreground">
+                            Simple three-step process from plan creation to
+                            daily use.
+                        </p>
                     </div>
 
                     <div className="grid gap-8 md:grid-cols-3">
@@ -144,8 +187,12 @@ export default function Welcome() {
                                     {index + 1}
                                 </div>
                                 <div className="pt-1">
-                                    <h3 className="mb-2 font-semibold text-foreground">{step.title}</h3>
-                                    <p className="text-sm leading-relaxed text-muted-foreground">{step.description}</p>
+                                    <h3 className="mb-2 font-semibold text-foreground">
+                                        {step.title}
+                                    </h3>
+                                    <p className="text-sm leading-relaxed text-muted-foreground">
+                                        {step.description}
+                                    </p>
                                 </div>
                             </div>
                         ))}
@@ -155,9 +202,12 @@ export default function Welcome() {
                 {/* Call To Action Section */}
                 <section className="mx-auto max-w-6xl px-6 pb-20">
                     <div className="overflow-hidden rounded-2xl bg-primary px-8 py-14 text-center">
-                        <h2 className="mb-4 text-3xl font-bold text-primary-foreground">Ready to Get Started?</h2>
+                        <h2 className="mb-4 text-3xl font-bold text-primary-foreground">
+                            Ready to Get Started?
+                        </h2>
                         <p className="mb-8 text-primary-foreground/80">
-                            Sign in to your account and start managing refreshment quotas today.
+                            Sign in to your account and start managing
+                            refreshment quotas today.
                         </p>
                         <Link
                             href={isLoggedIn ? dashboard() : login()}
@@ -173,12 +223,17 @@ export default function Welcome() {
                 <footer className="border-t border-border">
                     <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6 text-sm text-muted-foreground">
                         <div className="flex items-center gap-2">
-                            <img src="/common/logo.png" alt="Bs Refreshment" className="h-7 w-auto" />
+                            <img
+                                src="/common/logo.png"
+                                alt="Bs Refreshment"
+                                className="h-7 w-auto"
+                            />
                         </div>
-                        <span>© {new Date().getFullYear()} All rights reserved.</span>
+                        <span>
+                            © {new Date().getFullYear()} All rights reserved.
+                        </span>
                     </div>
                 </footer>
-
             </div>
         </>
     );

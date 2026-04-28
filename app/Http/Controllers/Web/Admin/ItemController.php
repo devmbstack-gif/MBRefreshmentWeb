@@ -57,7 +57,7 @@ class ItemController extends Controller
         $request->validate($this->rules(), $this->messages());
 
         $imageUrl = $request->file('image')
-            ? '/storage/' . $request->file('image')->store('items', 'public')
+            ? '/storage/'.$request->file('image')->store('items', 'public')
             : null;
 
         Item::create([
@@ -90,7 +90,7 @@ class ItemController extends Controller
                 Storage::disk('public')->delete(str_replace('/storage/', '', $item->image_url));
             }
 
-            $data['image_url'] = '/storage/' . $request->file('image')->store('items', 'public');
+            $data['image_url'] = '/storage/'.$request->file('image')->store('items', 'public');
         }
 
         $item->update($data);

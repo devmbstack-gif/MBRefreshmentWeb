@@ -16,7 +16,11 @@ export default function AuthSimpleLayout({
                             href={home()}
                             className="flex flex-col items-center gap-2 font-medium"
                         >
-                            <img src="/common/iconBackground.jpeg" alt="Bs Refreshment" className="h-24 w-24 rounded-2xl object-cover" />
+                            <img
+                                src="/common/iconBackground.jpeg"
+                                alt="Bs Refreshment"
+                                className="h-24 w-24 rounded-2xl object-cover"
+                            />
                             <span className="sr-only">{title}</span>
                         </Link>
 

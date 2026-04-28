@@ -11,9 +11,11 @@ function SidebarCircleTrigger() {
             onClick={toggleSidebar}
             className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-500 text-white shadow-md transition-colors hover:bg-blue-600 focus:outline-none"
         >
-            {state === 'collapsed'
-                ? <ChevronRight className="h-4 w-4" />
-                : <ChevronLeft className="h-4 w-4" />}
+            {state === 'collapsed' ? (
+                <ChevronRight className="h-4 w-4" />
+            ) : (
+                <ChevronLeft className="h-4 w-4" />
+            )}
         </button>
     );
 }

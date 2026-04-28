@@ -19,11 +19,11 @@ class EmployeeController extends Controller
     {
         return [
             'name' => 'required|string|max:100',
-            'email' => 'required|email|unique:users,email,' . ($employee?->user_id ?? 'NULL'),
+            'email' => 'required|email|unique:users,email,'.($employee?->user_id ?? 'NULL'),
             'password' => $employee
                 ? ['required', Password::min(8)]
                 : ['required', Password::min(8)],
-            'employee_code' => 'required|string|max:50|unique:employees,employee_code,' . ($employee?->id ?? 'NULL'),
+            'employee_code' => 'required|string|max:50|unique:employees,employee_code,'.($employee?->id ?? 'NULL'),
             'department' => 'nullable|string|max:100',
             'designation' => 'nullable|string|max:100',
             'personal_email' => 'nullable|email|max:150',
@@ -71,7 +71,7 @@ class EmployeeController extends Controller
 
         DB::transaction(function () use ($request) {
             $avatar = $request->file('avatar')
-                ? '/storage/' . $request->file('avatar')->store('avatars', 'public')
+                ? '/storage/'.$request->file('avatar')->store('avatars', 'public')
                 : null;
 
             $user = User::create([
@@ -113,7 +113,7 @@ class EmployeeController extends Controller
                     Storage::disk('public')->delete(str_replace('/storage/', '', $employee->user->avatar));
                 }
 
-                $userData['avatar'] = '/storage/' . $request->file('avatar')->store('avatars', 'public');
+                $userData['avatar'] = '/storage/'.$request->file('avatar')->store('avatars', 'public');
             }
 
             $employee->user->update($userData);
