@@ -17,7 +17,7 @@ class CategoryController extends Controller
 
         return [
             'name' => 'required|string|max:100|unique:categories,name,'.$categoryId,
-            'image' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'image' => ['nullable', 'file', 'extensions:jpg,jpeg,png,webp', 'max:2048'],
         ];
     }
 

@@ -32,7 +32,7 @@ class ItemController extends Controller
             'description' => 'nullable|string|max:255',
             'stock_quantity' => 'required|integer|min:0',
             'low_stock_threshold' => 'required|integer|min:0',
-            'image' => 'required|file|mimes:jpg,jpeg,png,webp|max:2048',
+            'image' => 'required|file|extensions:jpg,jpeg,png,webp|max:2048',
         ];
     }
 
@@ -40,7 +40,7 @@ class ItemController extends Controller
     {
         return [
             'image.file' => 'Please upload a valid file.',
-            'image.mimes' => 'Item image must be a JPG, JPEG, PNG, or WEBP file.',
+            'image.extensions' => 'Item image must be a JPG, JPEG, PNG, or WEBP file.',
             'image.max' => 'Item image size must not be greater than 2MB.',
             'image.required' => 'Item image is required.',
         ];
@@ -113,7 +113,7 @@ class ItemController extends Controller
     public function update(Request $request, Item $item): RedirectResponse
     {
         $rules = $this->rules();
-        $rules['image'] = 'nullable|file|mimes:jpg,jpeg,png,webp|max:2048';
+        $rules['image'] = 'nullable|file|extensions:jpg,jpeg,png,webp|max:2048';
         $request->validate($rules, $this->messages());
 
         $category = Category::query()

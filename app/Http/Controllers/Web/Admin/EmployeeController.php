@@ -28,7 +28,7 @@ class EmployeeController extends Controller
             'designation' => 'nullable|string|max:100',
             'personal_email' => 'nullable|email|max:150',
             'joining_date' => 'nullable|date',
-            'avatar' => 'nullable|file|mimes:jpg,jpeg,png,webp|max:2048',
+            'avatar' => 'nullable|file|extensions:jpg,jpeg,png,webp|max:2048',
         ];
     }
 
@@ -36,7 +36,7 @@ class EmployeeController extends Controller
     {
         return [
             'avatar.file' => 'Please upload a valid file.',
-            'avatar.mimes' => 'Employee image must be a JPG, JPEG, PNG, or WEBP file.',
+            'avatar.extensions' => 'Employee image must be a JPG, JPEG, PNG, or WEBP file.',
             'avatar.max' => 'Employee image size must not be greater than 2MB.',
         ];
     }

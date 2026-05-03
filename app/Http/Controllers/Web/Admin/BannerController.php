@@ -12,14 +12,12 @@ use Inertia\Response;
 
 class BannerController extends Controller
 {
-    private function rules(?Banner $banner = null): array
+    private function rules(): array
     {
-        $imageRule = $banner ? 'nullable|file|mimes:jpg,jpeg,png,webp|max:2048' : 'nullable|file|mimes:jpg,jpeg,png,webp|max:2048';
-
         return [
             'title' => 'required|string|max:150',
             'description' => 'nullable|string|max:2000',
-            'image' => $imageRule,
+            'image' => 'nullable|file|extensions:jpg,jpeg,png,webp|max:2048',
             'sort_order' => 'required|integer|min:0|max:65535',
             'is_active' => 'sometimes|boolean',
         ];
@@ -68,7 +66,7 @@ class BannerController extends Controller
 
     public function update(Request $request, Banner $banner): RedirectResponse
     {
-        $validated = $request->validate($this->rules($banner));
+        $validated = $request->validate($this->rules());
 
         $data = [
             'title' => $validated['title'],

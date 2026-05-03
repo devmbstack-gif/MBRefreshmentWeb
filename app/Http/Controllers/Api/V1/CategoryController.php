@@ -70,7 +70,7 @@ class CategoryController extends Controller
             ->get()
             ->map(fn (Item $item) => [
                 'id' => $item->id,
-                'name' => $item->name,
+                'item_name' => $item->name,
                 'category' => $item->category,
                 'description' => $item->description,
                 'image_url' => $this->buildAssetUrl($item->image_url),
@@ -103,7 +103,7 @@ class CategoryController extends Controller
             ->get()
             ->map(fn (Item $item) => [
                 'id' => $item->id,
-                'name' => $item->name,
+                'item_name' => $item->name,
                 'category' => $item->category,
                 'category_id' => $item->category_id,
                 'description' => $item->description,

@@ -178,7 +178,7 @@ class QuotaController extends Controller
             'subject' => 'required|string|max:150',
             'body' => 'required|string|max:5000',
             'attachments' => 'nullable|array|max:5',
-            'attachments.*' => 'file|mimes:jpg,jpeg,png,webp|max:4096',
+            'attachments.*' => 'file|extensions:jpg,jpeg,png,webp|max:4096',
         ]);
 
         $user = $request->user();

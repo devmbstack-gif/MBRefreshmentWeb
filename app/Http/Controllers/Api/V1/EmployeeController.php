@@ -242,11 +242,11 @@ class EmployeeController extends Controller
     public function updateProfileAvatar(Request $request): JsonResponse
     {
         $request->validate([
-            'avatar' => 'required|file|mimes:jpg,jpeg,png,webp|max:2048',
+            'avatar' => 'required|file|extensions:jpg,jpeg,png,webp|max:2048',
         ], [
             'avatar.required' => 'Please choose an image file.',
             'avatar.file' => 'Please upload a valid file.',
-            'avatar.mimes' => 'Profile image must be a JPG, JPEG, PNG, or WEBP file.',
+            'avatar.extensions' => 'Profile image must be a JPG, JPEG, PNG, or WEBP file.',
             'avatar.max' => 'Profile image size must not be greater than 2MB.',
         ]);
 
@@ -320,7 +320,7 @@ class EmployeeController extends Controller
             'subject' => 'required|string|max:150',
             'body' => 'required|string|max:5000',
             'attachments' => 'nullable|array|max:5',
-            'attachments.*' => 'file|mimes:jpg,jpeg,png,webp|max:4096',
+            'attachments.*' => 'file|extensions:jpg,jpeg,png,webp|max:4096',
         ]);
 
         $user = $request->user();
@@ -369,7 +369,7 @@ class EmployeeController extends Controller
         $validated = $request->validate([
             'body' => 'required|string|max:5000',
             'attachments' => 'nullable|array|max:5',
-            'attachments.*' => 'file|mimes:jpg,jpeg,png,webp|max:4096',
+            'attachments.*' => 'file|extensions:jpg,jpeg,png,webp|max:4096',
         ]);
 
         $employee = $request->user()->employee;
