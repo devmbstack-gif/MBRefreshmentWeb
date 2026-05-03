@@ -7,9 +7,24 @@ use Illuminate\Support\Str;
 
 final class PublicDiskUpload
 {
+    private static function publicUploadPrefixes(): array
+    {
+        return [
+            'banners',
+            'categories',
+            'items',
+            'avatars',
+            'feedback-attachments',
+        ];
+    }
+
     public static function store(UploadedFile $file, string $directory): string
     {
         $directory = trim($directory, '/');
+        if (! in_array($directory, self::publicUploadPrefixes(), true)) {
+            throw new \InvalidArgumentException('Unsupported upload directory.');
+        }
+
         $ext = strtolower($file->getClientOriginalExtension());
         if ($ext === '') {
             $ext = 'bin';
@@ -23,8 +38,7 @@ final class PublicDiskUpload
             throw new \RuntimeException('Unable to read uploaded file.');
         }
 
-        $root = storage_path('app/public');
-        $fullPath = $root.'/'.$relative;
+        $fullPath = public_path($relative);
         $dir = dirname($fullPath);
         if (! is_dir($dir)) {
             if (! mkdir($dir, 0755, true) && ! is_dir($dir)) {
@@ -36,7 +50,7 @@ final class PublicDiskUpload
             throw new \RuntimeException('Unable to write uploaded file.');
         }
 
-        return '/storage/'.$relative;
+        return '/'.$relative;
     }
 
     public static function deleteFromPublicUrl(?string $url): void
@@ -45,25 +59,41 @@ final class PublicDiskUpload
             return;
         }
 
-        $path = parse_url($url, PHP_URL_PATH);
+        if (str_starts_with($url, 'http://') || str_starts_with($url, 'https://')) {
+            $path = parse_url($url, PHP_URL_PATH);
+        } else {
+            $path = $url;
+        }
+
         if (! is_string($path) || $path === '') {
-            $path = str_starts_with($url, '/storage/')
-                ? $url
-                : null;
-        }
-
-        if ($path === null || ! str_starts_with($path, '/storage/')) {
             return;
         }
 
-        $relative = ltrim(str_replace('\\', '/', substr($path, strlen('/storage/'))), '/');
-        if ($relative === '') {
-            return;
+        $norm = str_replace('\\', '/', $path);
+
+        $fullPath = null;
+        if (str_starts_with($norm, '/storage/')) {
+            $rel = ltrim(substr($norm, strlen('/storage/')), '/');
+            if ($rel !== '') {
+                $fullPath = storage_path('app/public/'.$rel);
+            }
+        } elseif (self::pathStartsWithAllowedPublic($norm)) {
+            $fullPath = public_path(ltrim($norm, '/'));
         }
 
-        $fullPath = storage_path('app/public/'.$relative);
-        if (is_file($fullPath)) {
+        if ($fullPath !== null && is_file($fullPath)) {
             @unlink($fullPath);
         }
+    }
+
+    private static function pathStartsWithAllowedPublic(string $path): bool
+    {
+        foreach (self::publicUploadPrefixes() as $prefix) {
+            if (str_starts_with($path, '/'.$prefix.'/')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
