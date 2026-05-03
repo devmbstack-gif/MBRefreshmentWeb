@@ -114,10 +114,10 @@ export default function AdminPlans({
         <>
             <Head title="Month Plans" />
 
-            <div className="space-y-6 p-4 sm:p-6">
+            <div className="w-full min-w-0 space-y-6">
                 <div className="overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-r from-white via-emerald-50/70 to-cyan-50/70 shadow-sm">
-                    <div className="flex flex-col gap-6 px-6 py-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-                        <div className="max-w-2xl">
+                    <div className="flex flex-col gap-6 px-4 py-5 sm:px-6 sm:py-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+                        <div className="min-w-0 max-w-2xl">
                             <div className="mb-3 inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
                                 Month planning
                             </div>
@@ -130,7 +130,7 @@ export default function AdminPlans({
                                 with a cleaner workflow.
                             </p>
                         </div>
-                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 sm:grid-cols-4">
                             <SummaryCard
                                 label="Total plans"
                                 value={plans.length}
@@ -149,7 +149,7 @@ export default function AdminPlans({
                 </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
+                    <div className="min-w-0">
                         <h2 className="text-lg font-semibold text-slate-900">
                             Plan Directory
                         </h2>
@@ -159,7 +159,7 @@ export default function AdminPlans({
                     </div>
                     <Button
                         onClick={() => setShowCreateModal(true)}
-                        className="gap-2 rounded-xl px-4 py-2.5 shadow-sm"
+                        className="w-full shrink-0 gap-2 rounded-xl px-4 py-2.5 shadow-sm sm:w-auto"
                     >
                         <Plus className="h-4 w-4" />
                         Create Month Plan
@@ -185,7 +185,7 @@ export default function AdminPlans({
                         </p>
                     </div>
                 ) : (
-                    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
                         {plans.map((plan) => (
                             <PlanCard
                                 key={plan.id}
@@ -250,11 +250,11 @@ function PlanCard({
     onDelete: () => void;
 }) {
     return (
-        <div className="flex flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
-            <div className="border-b border-slate-100 bg-gradient-to-r from-emerald-500 to-teal-500 px-5 py-4 text-white">
+        <div className="flex min-w-0 flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
+            <div className="border-b border-slate-100 bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-4 text-white sm:px-5">
                 <div className="flex items-start justify-between gap-2">
-                    <div>
-                        <h3 className="font-semibold">{plan.title}</h3>
+                    <div className="min-w-0 flex-1">
+                        <h3 className="truncate font-semibold">{plan.title}</h3>
                         <p className="mt-0.5 text-xs text-white/80 capitalize">
                             {plan.period_type} month plan
                         </p>
@@ -271,8 +271,8 @@ function PlanCard({
                 </div>
             </div>
 
-            <div className="space-y-4 p-5">
-                <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-4 p-4 sm:p-5">
+                <div className="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2">
                     <MiniStat label="Starts" value={plan.starts_at} />
                     <MiniStat label="Ends" value={plan.ends_at} />
                 </div>
@@ -286,9 +286,9 @@ function PlanCard({
                         {plan.items.map((item) => (
                             <div
                                 key={item.item_id}
-                                className="flex items-center justify-between rounded-xl bg-white px-3 py-2 text-sm"
+                                className="flex min-w-0 items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 text-sm"
                             >
-                                <span className="text-slate-700">
+                                <span className="min-w-0 flex-1 truncate text-slate-700">
                                     {item.item_name}
                                 </span>
                                 <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">
@@ -305,7 +305,7 @@ function PlanCard({
                         {plan.assigned_count} assigned
                     </span>
 
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-4">
+                    <div className="grid grid-cols-2 gap-2 min-[480px]:grid-cols-4">
                         <Button
                             size="sm"
                             variant="outline"
@@ -357,7 +357,7 @@ function DeletePlanModal({
 }) {
     return (
         <Dialog open={true} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="w-[calc(100vw-1.5rem)] max-w-md sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>Delete plan</DialogTitle>
                     <DialogDescription>
@@ -395,7 +395,7 @@ function StatusPlanModal({
 
     return (
         <Dialog open={true} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="w-[calc(100vw-1.5rem)] max-w-md sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>{action} plan</DialogTitle>
                     <DialogDescription>
@@ -437,11 +437,13 @@ function SummaryCard({ label, value }: { label: string; value: number }) {
 
 function MiniStat({ label, value }: { label: string; value: string }) {
     return (
-        <div className="rounded-2xl bg-slate-50 px-4 py-3">
+        <div className="min-w-0 rounded-2xl bg-slate-50 px-4 py-3">
             <p className="text-[11px] font-semibold tracking-[0.18em] text-slate-400 uppercase">
                 {label}
             </p>
-            <p className="mt-1 text-sm font-semibold text-slate-800">{value}</p>
+            <p className="mt-1 break-words text-sm font-semibold text-slate-800">
+                {value}
+            </p>
         </div>
     );
 }
@@ -552,9 +554,9 @@ function CreatePlanModal({
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="max-h-[92vh] overflow-y-auto rounded-3xl border border-emerald-100 bg-white p-0 shadow-2xl [-ms-overflow-style:none] [scrollbar-width:none] sm:max-w-2xl [&::-webkit-scrollbar]:hidden">
-                <DialogHeader className="border-b border-emerald-100 bg-gradient-to-r from-white to-emerald-50 px-6 py-5">
-                    <DialogTitle className="text-2xl font-semibold text-slate-900">
+            <DialogContent className="flex max-h-[92vh] w-[calc(100vw-1.5rem)] max-w-2xl flex-col overflow-y-auto rounded-3xl border border-emerald-100 bg-white p-0 shadow-2xl [-ms-overflow-style:none] [scrollbar-width:none] sm:max-w-2xl [&::-webkit-scrollbar]:hidden">
+                <DialogHeader className="border-b border-emerald-100 bg-gradient-to-r from-white to-emerald-50 px-4 py-4 sm:px-6 sm:py-5">
+                    <DialogTitle className="text-xl font-semibold text-slate-900 sm:text-2xl">
                         Create Month Plan
                     </DialogTitle>
                     <DialogDescription className="text-sm text-slate-500">
@@ -563,8 +565,11 @@ function CreatePlanModal({
                     </DialogDescription>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="space-y-5 p-6">
-                    <div className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/50 p-5">
+                <form
+                    onSubmit={handleSubmit}
+                    className="space-y-5 p-4 sm:p-6"
+                >
+                    <div className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/50 p-4 sm:p-5">
                         <div className="space-y-1.5">
                             <Label>Plan Title</Label>
                             <Input
@@ -893,17 +898,20 @@ function EditPlanModal({
 
     return (
         <Dialog open={true} onOpenChange={onClose}>
-            <DialogContent className="max-h-[92vh] overflow-y-auto rounded-3xl border border-emerald-100 bg-white p-0 shadow-2xl [-ms-overflow-style:none] [scrollbar-width:none] sm:max-w-2xl [&::-webkit-scrollbar]:hidden">
-                <DialogHeader className="border-b border-emerald-100 bg-gradient-to-r from-white to-emerald-50 px-6 py-5">
-                    <DialogTitle className="text-2xl font-semibold text-slate-900">
+            <DialogContent className="flex max-h-[92vh] w-[calc(100vw-1.5rem)] max-w-2xl flex-col overflow-y-auto rounded-3xl border border-emerald-100 bg-white p-0 shadow-2xl [-ms-overflow-style:none] [scrollbar-width:none] sm:max-w-2xl [&::-webkit-scrollbar]:hidden">
+                <DialogHeader className="border-b border-emerald-100 bg-gradient-to-r from-white to-emerald-50 px-4 py-4 sm:px-6 sm:py-5">
+                    <DialogTitle className="text-xl font-semibold text-slate-900 sm:text-2xl">
                         Edit Month Plan
                     </DialogTitle>
                     <DialogDescription className="text-sm text-slate-500">
                         Update plan details, item list, and quantities.
                     </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-5 p-6">
-                    <div className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/50 p-5">
+                <form
+                    onSubmit={handleSubmit}
+                    className="space-y-5 p-4 sm:p-6"
+                >
+                    <div className="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/50 p-4 sm:p-5">
                         <div className="space-y-1.5">
                             <Label>Plan Title</Label>
                             <Input
@@ -1232,9 +1240,9 @@ function AssignPlanModal({
 
     return (
         <Dialog open={true} onOpenChange={onClose}>
-            <DialogContent className="max-h-[92vh] overflow-y-auto rounded-3xl border border-emerald-100 bg-white p-0 shadow-2xl [-ms-overflow-style:none] [scrollbar-width:none] sm:max-w-5xl [&::-webkit-scrollbar]:hidden">
-                <DialogHeader className="border-b border-emerald-100 bg-gradient-to-r from-emerald-500 via-emerald-500 to-teal-500 px-6 py-5 text-white">
-                    <DialogTitle className="text-2xl font-semibold text-white">
+            <DialogContent className="flex max-h-[92vh] w-[calc(100vw-1.5rem)] max-w-5xl flex-col overflow-y-auto rounded-3xl border border-emerald-100 bg-white p-0 shadow-2xl [-ms-overflow-style:none] [scrollbar-width:none] sm:max-w-5xl [&::-webkit-scrollbar]:hidden">
+                <DialogHeader className="border-b border-emerald-100 bg-gradient-to-r from-emerald-500 via-emerald-500 to-teal-500 px-4 py-4 text-white sm:px-6 sm:py-5">
+                    <DialogTitle className="text-xl font-semibold text-white sm:text-2xl">
                         Assign Month Plan
                     </DialogTitle>
                     <DialogDescription className="text-sm text-emerald-50">
@@ -1243,7 +1251,10 @@ function AssignPlanModal({
                     </DialogDescription>
                 </DialogHeader>
 
-                <form onSubmit={handleSubmit} className="space-y-5 p-6">
+                <form
+                    onSubmit={handleSubmit}
+                    className="space-y-5 p-4 sm:p-6"
+                >
                     {form.errors.employee_ids && (
                         <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
                             {form.errors.employee_ids}

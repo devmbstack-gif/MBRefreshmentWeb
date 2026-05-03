@@ -107,6 +107,14 @@ class FcmService
             $stringData[(string) $key] = (string) $value;
         }
 
+        $notificationTitle = trim($title) !== ''
+            ? $title
+            : (string) (config('app.name') ?? 'App');
+        $notificationBody = trim($body) !== '' ? $body : $notificationTitle;
+
+        $stringData['title'] = $notificationTitle;
+        $stringData['body'] = $notificationBody;
+
         $url = 'https://fcm.googleapis.com/v1/projects/'.$projectId.'/messages:send';
 
         try {
@@ -122,8 +130,8 @@ class FcmService
                 'message' => [
                     'token' => $token,
                     'notification' => [
-                        'title' => $title,
-                        'body' => $body,
+                        'title' => $notificationTitle,
+                        'body' => $notificationBody,
                     ],
                     'data' => $stringData,
                 ],

@@ -139,9 +139,9 @@ export default function AdminEmployees({ employees }: Props) {
         <>
             <Head title="Employees" />
 
-            <div className="space-y-6 p-4 sm:p-6">
+            <div className="w-full min-w-0 space-y-6">
                 <div className="overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-r from-white via-emerald-50/70 to-cyan-50/70 shadow-sm">
-                    <div className="flex flex-col gap-6 px-6 py-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+                    <div className="flex flex-col gap-6 px-4 py-5 sm:px-6 sm:py-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
                         <div className="max-w-2xl">
                             <div className="mb-3 inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
                                 Team management
@@ -155,7 +155,7 @@ export default function AdminEmployees({ employees }: Props) {
                                 style.
                             </p>
                         </div>
-                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                        <div className="grid grid-cols-1 gap-3 min-[400px]:grid-cols-2 sm:grid-cols-3">
                             <SummaryCard
                                 label="Total"
                                 value={employees.length}
@@ -173,7 +173,7 @@ export default function AdminEmployees({ employees }: Props) {
                 </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
+                    <div className="min-w-0">
                         <h2 className="text-lg font-semibold text-slate-900">
                             Employee Directory
                         </h2>
@@ -184,7 +184,7 @@ export default function AdminEmployees({ employees }: Props) {
                     </div>
                     <Button
                         onClick={() => setShowCreateModal(true)}
-                        className="gap-2 rounded-xl px-4 py-2.5 shadow-sm"
+                        className="w-full shrink-0 gap-2 rounded-xl px-4 py-2.5 shadow-sm sm:w-auto"
                     >
                         <Plus className="h-4 w-4" />
                         Add Employee
@@ -202,7 +202,7 @@ export default function AdminEmployees({ employees }: Props) {
                     </div>
                 )}
 
-                <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
                     {employees.length === 0 ? (
                         <div className="col-span-full rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center shadow-sm">
                             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
@@ -227,60 +227,58 @@ export default function AdminEmployees({ employees }: Props) {
                         employees.map((employee) => (
                             <div
                                 key={employee.id}
-                                className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg"
+                                className="group flex min-w-0 flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg"
                             >
-                                <div className="h-24 bg-emerald-500" />
-                                <div className="relative px-5 pb-5">
-                                    <div className="flex items-start justify-between">
-                                        <div className="-mt-8 flex min-w-0 items-center gap-3">
-                                            {employee.avatar ? (
-                                                <img
-                                                    src={employee.avatar}
-                                                    alt={employee.name}
-                                                    className="h-16 w-16 rounded-2xl border-4 border-white object-cover shadow-md"
-                                                />
-                                            ) : (
-                                                <div
-                                                    className={`flex h-16 w-16 items-center justify-center rounded-2xl border-4 border-white ${getAvatarGradient(employee.name)} text-lg font-bold text-white shadow-md`}
-                                                >
-                                                    {getEmployeeInitials(
-                                                        employee.name,
-                                                    )}
-                                                </div>
-                                            )}
-                                            <div className="min-w-0 pt-8">
-                                                <h3 className="truncate text-lg font-semibold text-slate-900">
-                                                    {employee.name}
-                                                </h3>
-                                                <p className="truncate text-xs font-medium tracking-[0.2em] text-slate-400 uppercase">
-                                                    {employee.employee_code}
-                                                </p>
+                                <div className="relative h-24 shrink-0 bg-gradient-to-br from-emerald-500 to-teal-600">
+                                    <div className="absolute top-2 right-2 z-10 flex max-w-[calc(100%-1rem)] flex-wrap items-center justify-end gap-1.5 sm:top-3 sm:right-3 sm:gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                copyEmployeeDetails(employee)
+                                            }
+                                            className="inline-flex shrink-0 items-center justify-center gap-1 rounded-full border border-white/70 bg-white/95 px-2.5 py-1 text-[11px] font-semibold text-emerald-800 shadow-sm backdrop-blur-sm transition hover:bg-white sm:gap-1.5 sm:px-3 sm:text-xs"
+                                            title="Copy employee details"
+                                        >
+                                            <Copy className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                            Copy
+                                        </button>
+                                        <span
+                                            className={`inline-flex shrink-0 items-center rounded-full border border-white/50 px-2.5 py-1 text-[11px] font-semibold shadow-sm backdrop-blur-sm sm:px-3 sm:text-xs ${
+                                                employee.is_active
+                                                    ? 'bg-white/95 text-emerald-800'
+                                                    : 'bg-rose-50/95 text-rose-800'
+                                            }`}
+                                        >
+                                            {employee.is_active
+                                                ? 'Active'
+                                                : 'Inactive'}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div className="relative min-w-0 px-4 pb-4 sm:px-5 sm:pb-5">
+                                    <div className="-mt-8 flex min-w-0 items-center gap-3">
+                                        {employee.avatar ? (
+                                            <img
+                                                src={employee.avatar}
+                                                alt={employee.name}
+                                                className="h-16 w-16 shrink-0 rounded-2xl border-4 border-white object-cover shadow-md"
+                                            />
+                                        ) : (
+                                            <div
+                                                className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border-4 border-white ${getAvatarGradient(employee.name)} text-lg font-bold text-white shadow-md`}
+                                            >
+                                                {getEmployeeInitials(
+                                                    employee.name,
+                                                )}
                                             </div>
-                                        </div>
-                                        <div className="mt-4 flex items-center gap-2">
-                                            <button
-                                                onClick={() =>
-                                                    copyEmployeeDetails(
-                                                        employee,
-                                                    )
-                                                }
-                                                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
-                                                title="Copy employee details"
-                                            >
-                                                <Copy className="h-3.5 w-3.5" />
-                                                Copy
-                                            </button>
-                                            <span
-                                                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                                                    employee.is_active
-                                                        ? 'bg-emerald-100 text-emerald-700'
-                                                        : 'bg-rose-100 text-rose-700'
-                                                }`}
-                                            >
-                                                {employee.is_active
-                                                    ? 'Active'
-                                                    : 'Inactive'}
-                                            </span>
+                                        )}
+                                        <div className="min-w-0 pt-8">
+                                            <h3 className="truncate text-base font-semibold text-slate-900 sm:text-lg">
+                                                {employee.name}
+                                            </h3>
+                                            <p className="truncate text-xs font-medium tracking-[0.2em] text-slate-400 uppercase">
+                                                {employee.employee_code}
+                                            </p>
                                         </div>
                                     </div>
 

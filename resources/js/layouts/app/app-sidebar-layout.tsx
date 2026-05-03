@@ -8,12 +8,14 @@ import {
     Coffee,
     LayoutDashboard,
     LogOut,
+    Menu,
     Package,
     Search,
     Settings,
     User,
     Users,
     MessageSquareWarning,
+    X,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -33,6 +35,8 @@ import {
     SheetTitle,
 } from '@/components/ui/sheet';
 import { useCurrentUrl } from '@/hooks/use-current-url';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { cn } from '@/lib/utils';
 import { logout } from '@/routes';
 import { edit as profileEdit } from '@/routes/profile';
 import { edit as securityEdit } from '@/routes/security';
@@ -58,7 +62,9 @@ type AdminNotification = {
 export default function AppSidebarLayout({ children }: AppLayoutProps) {
     const { auth } = usePage().props;
     const { isCurrentOrParentUrl } = useCurrentUrl();
+    const isMobile = useIsMobile();
     const [collapsed, setCollapsed] = useState(false);
+    const [mobileNavOpen, setMobileNavOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
     const [notificationOpen, setNotificationOpen] = useState(false);
@@ -70,6 +76,25 @@ export default function AppSidebarLayout({ children }: AppLayoutProps) {
 
     const isAdmin = auth.user?.role === 'super_admin';
     const sidebarWidth = collapsed ? 72 : 240;
+
+    useEffect(() => {
+        if (!isMobile) {
+            setMobileNavOpen(false);
+        }
+    }, [isMobile]);
+
+    useEffect(() => {
+        if (!isMobile || !mobileNavOpen) {
+            return;
+        }
+
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+        };
+    }, [isMobile, mobileNavOpen]);
 
     const groups = isAdmin
         ? [
@@ -255,16 +280,45 @@ export default function AppSidebarLayout({ children }: AppLayoutProps) {
         }
     }, [notificationOpen, isAdmin, loadNotifications]);
 
+    const mainMarginLeft = isMobile ? 0 : sidebarWidth;
+    const headerLeft = isMobile ? 0 : sidebarWidth;
+    const headerWidth = isMobile
+        ? '100%'
+        : `calc(100% - ${sidebarWidth}px)`;
+
     return (
-        <div className="min-h-screen bg-[#f6f7fb]">
+        <div className="min-h-screen overflow-x-hidden bg-[#f6f7fb]">
+            {isMobile && mobileNavOpen && (
+                <button
+                    type="button"
+                    className="fixed inset-0 z-20 bg-slate-900/45 backdrop-blur-[1px] lg:hidden"
+                    aria-label="Close navigation"
+                    onClick={() => setMobileNavOpen(false)}
+                />
+            )}
             <aside
-                className="fixed inset-y-0 left-0 z-30 border-r border-gray-200 bg-white transition-all duration-200"
-                style={{ width: `${sidebarWidth}px` }}
+                className={cn(
+                    'fixed inset-y-0 left-0 z-30 border-r border-gray-200 bg-white transition-transform duration-200 ease-out lg:translate-x-0',
+                    isMobile
+                        ? cn(
+                              'w-[min(288px,88vw)] shadow-2xl',
+                              mobileNavOpen
+                                  ? 'translate-x-0'
+                                  : '-translate-x-full',
+                          )
+                        : 'translate-x-0',
+                )}
+                style={
+                    isMobile
+                        ? undefined
+                        : { width: `${sidebarWidth}px` }
+                }
             >
                 <div className="flex h-16 items-center border-b border-gray-100 px-4">
                     <Link
                         href={isAdmin ? '/admin/dashboard' : '/employee/quota'}
-                        className="flex items-center gap-2 overflow-hidden"
+                        className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden"
+                        onClick={() => isMobile && setMobileNavOpen(false)}
                     >
                         <img
                             src="/common/iconBackground.jpeg"
@@ -277,12 +331,24 @@ export default function AppSidebarLayout({ children }: AppLayoutProps) {
                             </span>
                         )}
                     </Link>
+                    {isMobile && (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="ml-1 h-9 w-9 shrink-0 text-gray-600 lg:hidden"
+                            onClick={() => setMobileNavOpen(false)}
+                            aria-label="Close menu"
+                        >
+                            <X className="h-5 w-5" />
+                        </Button>
+                    )}
                 </div>
 
                 <button
                     type="button"
                     onClick={() => setCollapsed((s) => !s)}
-                    className="absolute top-20 -right-3 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-white shadow hover:opacity-90"
+                    className="absolute top-20 -right-3 z-10 hidden h-6 w-6 items-center justify-center rounded-full bg-primary text-white shadow hover:opacity-90 lg:flex"
                 >
                     {collapsed ? (
                         <ChevronRight className="h-3.5 w-3.5" />
@@ -294,7 +360,7 @@ export default function AppSidebarLayout({ children }: AppLayoutProps) {
                 <div className="h-[calc(100vh-64px)] overflow-y-auto px-3 py-4">
                     {groups.map((group) => (
                         <div key={group.label} className="mb-5">
-                            {!collapsed && (
+                            {(!collapsed || isMobile) && (
                                 <p className="mb-2 px-2 text-[10px] font-semibold tracking-widest text-gray-400">
                                     {group.label}
                                 </p>
@@ -309,6 +375,10 @@ export default function AppSidebarLayout({ children }: AppLayoutProps) {
                                         <Link
                                             key={item.title}
                                             href={item.href}
+                                            onClick={() =>
+                                                isMobile &&
+                                                setMobileNavOpen(false)
+                                            }
                                             className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition ${
                                                 active
                                                     ? 'bg-primary/10 text-primary'
@@ -318,7 +388,7 @@ export default function AppSidebarLayout({ children }: AppLayoutProps) {
                                             <item.icon
                                                 className={`h-4 w-4 shrink-0 ${active ? 'text-primary' : 'text-gray-400'}`}
                                             />
-                                            {!collapsed && (
+                                            {(!collapsed || isMobile) && (
                                                 <span className="truncate">
                                                     {item.title}
                                                 </span>
@@ -333,20 +403,32 @@ export default function AppSidebarLayout({ children }: AppLayoutProps) {
             </aside>
 
             <main
-                className="min-w-0 transition-all duration-200"
-                style={{ marginLeft: `${sidebarWidth}px` }}
+                className="min-w-0 transition-[margin] duration-200 ease-out"
+                style={{ marginLeft: `${mainMarginLeft}px` }}
             >
                 <header
-                    className="fixed top-0 z-20 h-16 border-b border-gray-200 bg-white transition-all duration-200"
+                    className="fixed top-0 z-20 h-16 border-b border-gray-200 bg-white transition-[left,width] duration-200 ease-out"
                     style={{
-                        left: `${sidebarWidth}px`,
-                        width: `calc(100vw - ${sidebarWidth}px)`,
+                        left: `${headerLeft}px`,
+                        width: headerWidth,
                     }}
                 >
-                    <div className="flex h-full items-center justify-between gap-4 px-6">
+                    <div className="flex h-full min-w-0 items-center justify-between gap-2 px-3 sm:gap-3 sm:px-4 md:gap-4 md:px-6">
+                        {isMobile && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="h-9 w-9 shrink-0 border-gray-200 lg:hidden"
+                                onClick={() => setMobileNavOpen(true)}
+                                aria-label="Open navigation"
+                            >
+                                <Menu className="h-5 w-5" />
+                            </Button>
+                        )}
                         <div
                             ref={searchWrapRef}
-                            className="relative w-full max-w-xl"
+                            className="relative min-w-0 flex-1 sm:max-w-xl"
                         >
                             <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
                             <input
@@ -593,8 +675,10 @@ export default function AppSidebarLayout({ children }: AppLayoutProps) {
                     </div>
                 </header>
 
-                <div className="min-h-screen bg-[#f6f7fb] p-6 pt-20">
-                    {children}
+                <div className="min-h-screen min-w-0 bg-[#f6f7fb] px-3 pt-20 pb-6 sm:px-4 sm:pb-8 md:px-6">
+                    <div className="mx-auto w-full min-w-0 max-w-[1600px]">
+                        {children}
+                    </div>
                 </div>
             </main>
         </div>
