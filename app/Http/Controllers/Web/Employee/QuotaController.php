@@ -28,21 +28,30 @@ class QuotaController extends Controller
             ->whereHas('item', fn ($query) => $query->where('is_active', true))
             ->with(['item', 'plan'])
             ->get()
-            ->map(fn ($quota) => [
-                'id' => $quota->id,
-                'item_name' => $quota->item->name,
-                'item_category' => $quota->item->category,
-                'item_image_url' => $quota->item->image_url,
-                'plan_title' => $quota->plan->title,
-                'plan_ends_at' => $quota->plan->ends_at->format('M d, Y'),
-                'total_qty' => $quota->total_qty,
-                'used_qty' => $quota->used_qty,
-                'remaining_qty' => $quota->remaining_qty,
-                'status' => $quota->status,
-                'percentage_used' => $quota->total_qty > 0
-                    ? round(($quota->used_qty / $quota->total_qty) * 100)
-                    : 0,
-            ]);
+            ->map(function ($quota) {
+                $img = $quota->item->image_url;
+
+                return [
+                    'id' => $quota->id,
+                    'item_name' => $quota->item->name,
+                    'item_category' => $quota->item->category,
+                    'item_description' => $quota->item->description,
+                    'item_image_url' => $img && (str_starts_with((string) $img, 'http://') || str_starts_with((string) $img, 'https://'))
+                        ? $img
+                        : ($img ? url($img) : null),
+                    'plan_title' => $quota->plan->title,
+                    'plan_description' => $quota->plan->description,
+                    'plan_period_type' => $quota->plan->period_type,
+                    'plan_ends_at' => $quota->plan->ends_at->format('M d, Y'),
+                    'total_qty' => $quota->total_qty,
+                    'used_qty' => $quota->used_qty,
+                    'remaining_qty' => $quota->remaining_qty,
+                    'status' => $quota->status,
+                    'percentage_used' => $quota->total_qty > 0
+                        ? round(($quota->used_qty / $quota->total_qty) * 100)
+                        : 0,
+                ];
+            });
 
         return Inertia::render('employee/quota', [
             'quotas' => $quotas,
@@ -58,7 +67,15 @@ class QuotaController extends Controller
             abort(403, 'This quota does not belong to you.');
         }
 
+        $isMealCategory = strcasecmp(trim((string) $quota->item?->category), 'meal') === 0;
+
         try {
+            if ($isMealCategory) {
+                app(QuotaService::class)->requestMealQuota($quota, 1);
+
+                return redirect()->back()->with('success', 'Meal request submitted and waiting for admin approval.');
+            }
+
             app(QuotaService::class)->useQuota($quota, 1);
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());

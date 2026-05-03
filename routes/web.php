@@ -1,10 +1,13 @@
 <?php
 
 use App\Http\Controllers\Web\Admin\AdminSearchController;
+use App\Http\Controllers\Web\Admin\BannerController;
+use App\Http\Controllers\Web\Admin\CategoryController;
 use App\Http\Controllers\Web\Admin\DashboardController;
 use App\Http\Controllers\Web\Admin\EmployeeController;
 use App\Http\Controllers\Web\Admin\ItemController;
 use App\Http\Controllers\Web\Admin\MailMessageController;
+use App\Http\Controllers\Web\Admin\MealOrderRequestController;
 use App\Http\Controllers\Web\Admin\NotificationController;
 use App\Http\Controllers\Web\Admin\QuotaPlanController;
 use App\Http\Controllers\Web\Employee\EmployeeSearchController;
@@ -42,6 +45,9 @@ Route::middleware(['auth', 'role.admin'])
         Route::put('/items/{item}', [ItemController::class, 'update'])->name('items.update');
         Route::patch('/items/{item}/toggle-status', [ItemController::class, 'toggleStatus'])->name('items.toggle-status');
         Route::delete('/items/{item}', [ItemController::class, 'destroy'])->name('items.destroy');
+        Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
+        Route::put('/categories/{category}', [CategoryController::class, 'update'])->name('categories.update');
+        Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
 
         Route::get('/plans', [QuotaPlanController::class, 'index'])->name('plans.index');
         Route::post('/plans', [QuotaPlanController::class, 'store'])->name('plans.store');
@@ -54,6 +60,14 @@ Route::middleware(['auth', 'role.admin'])
         Route::get('/mail-messages', [MailMessageController::class, 'index'])->name('mail-messages.index');
         Route::post('/mail-messages/{message}/reply', [MailMessageController::class, 'reply'])->name('mail-messages.reply');
         Route::delete('/mail-messages/{message}', [MailMessageController::class, 'destroy'])->name('mail-messages.destroy');
+        Route::get('/meal-orders', [MealOrderRequestController::class, 'index'])->name('meal-orders.index');
+        Route::post('/meal-orders/{request}/approve', [MealOrderRequestController::class, 'approve'])->name('meal-orders.approve');
+        Route::post('/meal-orders/{request}/reject', [MealOrderRequestController::class, 'reject'])->name('meal-orders.reject');
+        Route::get('/banners', [BannerController::class, 'index'])->name('banners.index');
+        Route::post('/banners', [BannerController::class, 'store'])->name('banners.store');
+        Route::put('/banners/{banner}', [BannerController::class, 'update'])->name('banners.update');
+        Route::delete('/banners/{banner}', [BannerController::class, 'destroy'])->name('banners.destroy');
+        Route::patch('/banners/{banner}/toggle-status', [BannerController::class, 'toggleStatus'])->name('banners.toggle-status');
         Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
         Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     });

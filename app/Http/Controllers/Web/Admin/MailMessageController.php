@@ -108,6 +108,14 @@ class MailMessageController extends Controller
             'status' => 'sent',
         ]);
 
+        app(NotificationService::class)->saveInApp(
+            $employeeUser,
+            'general',
+            'Admin replied to your request',
+            $validated['body'],
+            $replyRecord->id
+        );
+
         if ($fromAddress !== '' && $toAddress !== '') {
             $html = View::make('emails.admin-reply-employee', [
                 'emailTitle' => $subject,
@@ -125,14 +133,6 @@ class MailMessageController extends Controller
                     ->subject($subject);
             });
         }
-
-        app(NotificationService::class)->saveInApp(
-            $employeeUser,
-            'general',
-            'Admin replied to your request',
-            $validated['body'],
-            $replyRecord->id
-        );
 
         return redirect()->route('admin.mail-messages.index')->with('success', 'Reply sent to employee successfully.');
     }

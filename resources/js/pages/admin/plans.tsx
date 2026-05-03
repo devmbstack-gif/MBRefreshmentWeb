@@ -473,18 +473,18 @@ function CreatePlanModal({
         const id = parseInt(selectedItemId);
 
         if (!id) {
-return;
-}
+            return;
+        }
 
         if (selectedItems.find((i) => i.item_id === id)) {
-return;
-}
+            return;
+        }
 
         const item = availableItems.find((i) => i.id === id)!;
 
         if (item.stock_quantity < 1) {
-return;
-}
+            return;
+        }
 
         const newItem = { item_id: id, item_name: item.name, quantity: 1 };
         setSelectedItems((prev) => [...prev, newItem]);
@@ -813,18 +813,18 @@ function EditPlanModal({
         const id = parseInt(selectedItemId);
 
         if (!id) {
-return;
-}
+            return;
+        }
 
         if (selectedItems.find((i) => i.item_id === id)) {
-return;
-}
+            return;
+        }
 
         const item = availableItems.find((i) => i.id === id);
 
         if (!item || item.stock_quantity < 1) {
-return;
-}
+            return;
+        }
 
         setSelectedItems((prev) => [
             ...prev,
@@ -1165,8 +1165,8 @@ function AssignPlanModal({
         const selected = form.data.employee_ids;
 
         if (selected.length === 0) {
-return;
-}
+            return;
+        }
 
         const next: Record<string, number> = {};
 
@@ -1444,8 +1444,8 @@ return;
                                                                 );
 
                                                             if (!employee) {
-return null;
-}
+                                                                return null;
+                                                            }
 
                                                             return (
                                                                 <div

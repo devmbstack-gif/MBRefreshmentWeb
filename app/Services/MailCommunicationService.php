@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Employee;
 use App\Models\EmployeeQuota;
 use App\Models\MailMessage;
+use App\Models\MealOrderRequest;
 use App\Models\QuotaPlan;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
@@ -18,6 +19,22 @@ class MailCommunicationService
         private NotificationService $notificationService,
     ) {}
 
+    private function resolveEmployeeToEmail(Employee $employee): ?string
+    {
+        $employee->loadMissing('user');
+        $personal = trim((string) ($employee->personal_email ?? ''));
+        if ($personal !== '' && filter_var($personal, FILTER_VALIDATE_EMAIL)) {
+            return $personal;
+        }
+
+        $work = trim((string) ($employee->user?->email ?? ''));
+        if ($work !== '' && filter_var($work, FILTER_VALIDATE_EMAIL)) {
+            return $work;
+        }
+
+        return null;
+    }
+
     public function notifyEmployeePlanAssigned(Employee $employee, QuotaPlan $plan): void
     {
         $employee->loadMissing('user');
@@ -28,7 +45,8 @@ class MailCommunicationService
 
         $this->notificationService->notifyQuotaAssigned($employee, $plan);
 
-        if (! $user->email) {
+        $toEmail = $this->resolveEmployeeToEmail($employee);
+        if (! $toEmail) {
             return;
         }
 
@@ -60,7 +78,7 @@ class MailCommunicationService
             html: $html,
             fromEmail: $fromAddress,
             fromName: $fromName,
-            toEmail: $user->email,
+            toEmail: $toEmail,
             employeeId: $employee->id,
         );
     }
@@ -110,7 +128,20 @@ class MailCommunicationService
             'ctaUrl' => url('/admin/dashboard'),
         ])->render();
 
-        $sent = $this->dispatchMail(
+        User::query()
+            ->where('role', 'super_admin')
+            ->where('is_active', true)
+            ->each(function (User $admin) use ($subject, $plainBody, $quota) {
+                $this->notificationService->saveInApp(
+                    $admin,
+                    'general',
+                    $subject,
+                    $plainBody,
+                    $quota->id
+                );
+            });
+
+        $this->dispatchMail(
             kind: 'item_ordered',
             direction: 'to_admin',
             subject: $subject,
@@ -121,21 +152,178 @@ class MailCommunicationService
             toEmail: $toAddress,
             employeeId: $employee->id,
         );
+    }
 
-        if ($sent) {
-            User::query()
-                ->where('role', 'super_admin')
-                ->where('is_active', true)
-                ->each(function (User $admin) use ($subject, $plainBody, $quota) {
-                    $this->notificationService->saveInApp(
-                        $admin,
-                        'admin_item_ordered',
-                        $subject,
-                        $plainBody,
-                        $quota->id
-                    );
-                });
+    public function notifyAdminsMealOrderPending(MealOrderRequest $mealRequest): void
+    {
+        $mealRequest->loadMissing(['employee.user', 'item', 'quota.plan']);
+        $employee = $mealRequest->employee;
+        $user = $employee?->user;
+        $item = $mealRequest->item;
+        $plan = $mealRequest->quota?->plan;
+        if (! $employee || ! $user || ! $item || ! $plan) {
+            return;
         }
+
+        $subject = "Meal request: {$user->name} · {$item->name} × {$mealRequest->quantity}";
+        $plainBody = "{$user->name} ({$employee->employee_code}) requested {$mealRequest->quantity} × {$item->name} from plan \"{$plan->title}\". Approve or reject in Meal Orders.";
+
+        User::query()
+            ->where('role', 'super_admin')
+            ->where('is_active', true)
+            ->each(function (User $admin) use ($plainBody, $mealRequest) {
+                $this->notificationService->saveInApp(
+                    $admin,
+                    'general',
+                    'Meal order pending approval',
+                    $plainBody,
+                    $mealRequest->id
+                );
+            });
+
+        $toAddress = (string) config('mail.from.address');
+        if ($toAddress === '') {
+            return;
+        }
+
+        $fromAddress = (string) config('mail.from.address');
+        $fromName = (string) (config('mail.from.name') ?? config('app.name'));
+
+        $html = View::make('emails.meal-order-pending-admin', [
+            'emailTitle' => $subject,
+            'headerLine' => 'Meal order needs action',
+            'employeeName' => $user->name,
+            'employeeCode' => $employee->employee_code,
+            'itemName' => $item->name,
+            'planTitle' => $plan->title,
+            'quantity' => $mealRequest->quantity,
+            'ctaUrl' => url('/admin/meal-orders'),
+        ])->render();
+
+        $this->dispatchMail(
+            kind: 'meal_order_pending_admin',
+            direction: 'to_admin',
+            subject: $subject,
+            body: $plainBody,
+            html: $html,
+            fromEmail: $fromAddress,
+            fromName: $fromName,
+            toEmail: $toAddress,
+            employeeId: $employee->id,
+        );
+    }
+
+    public function notifyEmployeeMealRequestSubmitted(MealOrderRequest $mealRequest): void
+    {
+        $mealRequest->loadMissing(['employee.user', 'item']);
+        $employee = $mealRequest->employee;
+        $user = $employee?->user;
+        $item = $mealRequest->item;
+        if (! $user || ! $item || ! $employee) {
+            return;
+        }
+
+        $plainBody = "Your request for {$mealRequest->quantity} × {$item->name} was received and is waiting for administrator approval.";
+
+        $this->notificationService->saveInApp(
+            $user,
+            'general',
+            'Meal request submitted',
+            $plainBody,
+            $mealRequest->id
+        );
+
+        $toEmail = $this->resolveEmployeeToEmail($employee);
+        if (! $toEmail) {
+            return;
+        }
+
+        $fromAddress = (string) config('mail.from.address');
+        if ($fromAddress === '') {
+            return;
+        }
+
+        $fromName = (string) (config('mail.from.name') ?? config('app.name'));
+        $subject = "Received: meal request for {$item->name}";
+        $html = View::make('emails.meal-order-submitted-employee', [
+            'emailTitle' => $subject,
+            'headerLine' => 'We received your meal request',
+            'recipientName' => $user->name,
+            'eventBody' => $plainBody,
+            'itemName' => $item->name,
+            'quantity' => $mealRequest->quantity,
+            'ctaUrl' => url('/employee/quota'),
+        ])->render();
+
+        $this->dispatchMail(
+            kind: 'meal_order_submitted_employee',
+            direction: 'to_employee',
+            subject: $subject,
+            body: $plainBody,
+            html: $html,
+            fromEmail: $fromAddress,
+            fromName: $fromName,
+            toEmail: $toEmail,
+            employeeId: $employee->id,
+        );
+    }
+
+    public function notifyEmployeeMealOrderRejected(MealOrderRequest $mealRequest, ?string $reason): void
+    {
+        $mealRequest->loadMissing(['employee.user', 'item']);
+        $employee = $mealRequest->employee;
+        $user = $employee?->user;
+        $item = $mealRequest->item;
+        if (! $user || ! $item || ! $employee) {
+            return;
+        }
+
+        $plainBody = "Your meal request for {$mealRequest->quantity} × {$item->name} was not approved. Nothing was deducted from your quota.";
+        if ($reason !== null && $reason !== '') {
+            $plainBody .= "\n\nNote: {$reason}";
+        }
+
+        $this->notificationService->saveInApp(
+            $user,
+            'general',
+            'Meal request not approved',
+            $plainBody,
+            $mealRequest->id
+        );
+
+        $toEmail = $this->resolveEmployeeToEmail($employee);
+        if (! $toEmail) {
+            return;
+        }
+
+        $fromAddress = (string) config('mail.from.address');
+        if ($fromAddress === '') {
+            return;
+        }
+
+        $fromName = (string) (config('mail.from.name') ?? config('app.name'));
+        $subject = "Meal request update: {$item->name}";
+        $html = View::make('emails.meal-order-rejected-employee', [
+            'emailTitle' => $subject,
+            'headerLine' => 'Meal request was not approved',
+            'recipientName' => $user->name,
+            'itemName' => $item->name,
+            'quantity' => $mealRequest->quantity,
+            'reason' => $reason ?? '',
+            'ctaUrl' => url('/employee/quota'),
+        ])->render();
+
+        $this->dispatchMail(
+            kind: 'meal_order_rejected_employee',
+            direction: 'to_employee',
+            subject: $subject,
+            body: $plainBody,
+            html: $html,
+            fromEmail: $fromAddress,
+            fromName: $fromName,
+            toEmail: $toEmail,
+            employeeId: $employee->id,
+        );
     }
 
     public function notifyEmployeePlanStatus(Employee $employee, QuotaPlan $plan, string $action): void
@@ -168,7 +356,8 @@ class MailCommunicationService
             $plan->id
         );
 
-        if (! $user->email) {
+        $toEmail = $this->resolveEmployeeToEmail($employee);
+        if (! $toEmail) {
             return;
         }
 
@@ -196,7 +385,7 @@ class MailCommunicationService
             html: $html,
             fromEmail: $fromAddress,
             fromName: $fromName,
-            toEmail: $user->email,
+            toEmail: $toEmail,
             employeeId: $employee->id,
         );
     }
@@ -208,7 +397,12 @@ class MailCommunicationService
         $user = $employee?->user;
         $item = $quota->item;
         $plan = $quota->plan;
-        if (! $employee || ! $user || ! $item || ! $plan || ! $user->email) {
+        if (! $employee || ! $user || ! $item || ! $plan) {
+            return;
+        }
+
+        $toEmail = $this->resolveEmployeeToEmail($employee);
+        if (! $toEmail) {
             return;
         }
 
@@ -237,7 +431,7 @@ class MailCommunicationService
             html: $html,
             fromEmail: $fromAddress,
             fromName: $fromName,
-            toEmail: $user->email,
+            toEmail: $toEmail,
             employeeId: $employee->id,
         );
     }
@@ -249,7 +443,12 @@ class MailCommunicationService
         $user = $employee?->user;
         $item = $quota->item;
         $plan = $quota->plan;
-        if (! $employee || ! $user || ! $item || ! $plan || ! $user->email) {
+        if (! $employee || ! $user || ! $item || ! $plan) {
+            return;
+        }
+
+        $toEmail = $this->resolveEmployeeToEmail($employee);
+        if (! $toEmail) {
             return;
         }
 
@@ -291,7 +490,7 @@ class MailCommunicationService
             html: $html,
             fromEmail: $fromAddress,
             fromName: $fromName,
-            toEmail: $user->email,
+            toEmail: $toEmail,
             employeeId: $employee->id,
         );
     }

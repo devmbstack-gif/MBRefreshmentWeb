@@ -4,13 +4,15 @@ use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\IsEmployee;
 use App\Http\Middleware\IsSuperAdmin;
+use App\Services\QuotaService;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Http\Request;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
+use Illuminate\Http\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -56,4 +58,11 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return null;
         });
-    })->create();
+    })
+    ->withSchedule(function (Schedule $schedule): void {
+        $schedule->call(fn () => app(QuotaService::class)->expireOldQuotas())
+            ->dailyAt('00:10')
+            ->name('expire-old-quotas')
+            ->withoutOverlapping();
+    })
+    ->create();

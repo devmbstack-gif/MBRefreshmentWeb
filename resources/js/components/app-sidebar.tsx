@@ -5,6 +5,7 @@ import {
     Clock,
     Coffee,
     Flag,
+    Images,
     LayoutDashboard,
     MessageSquareWarning,
     Package,
@@ -43,6 +44,8 @@ const adminNavGroups: NavGroup[] = [
             { title: 'Employees', href: '/admin/employees', icon: Users },
             { title: 'Items', href: '/admin/items', icon: Package },
             { title: 'Month Plans', href: '/admin/plans', icon: ClipboardList },
+            { title: 'Meal Orders', href: '/admin/meal-orders', icon: Coffee },
+            { title: 'Banners', href: '/admin/banners', icon: Images },
             {
                 title: 'Feedback',
                 href: '/admin/mail-messages',

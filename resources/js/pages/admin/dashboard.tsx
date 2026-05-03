@@ -2,10 +2,12 @@ import { Head, Link } from '@inertiajs/react';
 import {
     AlertTriangle,
     BarChart3,
+    ChefHat,
     ChevronRight,
     ClipboardList,
     Clock,
     Coffee,
+    Images,
     Package,
     Plus,
     Users,
@@ -20,6 +22,8 @@ type Stats = {
     low_quota_alerts: number;
     total_items: number;
     month_usages: number;
+    pending_meal_orders: number;
+    active_banners: number;
 };
 
 type RecentUsage = {
@@ -54,6 +58,8 @@ type Props = {
     low_quota_employees: LowQuotaEmployee[];
     active_plans: ActivePlan[];
     admin_name: string;
+    meal_orders_url: string;
+    banners_url: string;
 };
 
 const categoryEmoji: Record<string, string> = {
@@ -90,8 +96,8 @@ function avatarBg(name: string) {
     let h = 0;
 
     for (const c of name) {
-h += c.charCodeAt(0);
-}
+        h += c.charCodeAt(0);
+    }
 
     return avatarPalette[h % avatarPalette.length];
 }
@@ -102,6 +108,8 @@ export default function AdminDashboard({
     low_quota_employees,
     active_plans,
     admin_name,
+    meal_orders_url,
+    banners_url,
 }: Props) {
     const [search] = useState('');
     const [categoryFilter] = useState('All');
@@ -161,6 +169,19 @@ export default function AdminDashboard({
             icon: <Package className="h-5 w-5 text-cyan-600" />,
             iconBg: 'bg-cyan-100',
         },
+        {
+            label: 'Meal orders pending',
+            value: stats.pending_meal_orders,
+            icon: <ChefHat className="h-5 w-5 text-orange-600" />,
+            iconBg: 'bg-orange-100',
+            ping: stats.pending_meal_orders > 0,
+        },
+        {
+            label: 'Active app banners',
+            value: stats.active_banners,
+            icon: <Images className="h-5 w-5 text-violet-600" />,
+            iconBg: 'bg-violet-100',
+        },
     ];
 
     return (
@@ -200,6 +221,67 @@ export default function AdminDashboard({
                             </div>
                         </div>
                     </div>
+
+                    <div className="overflow-hidden rounded-2xl border border-violet-200 bg-gradient-to-r from-violet-50 via-white to-fuchsia-50/70 shadow-sm">
+                        <div className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                            <div className="flex items-start gap-3">
+                                <span className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-600 text-white shadow-md">
+                                    <Images className="h-5 w-5" aria-hidden />
+                                </span>
+                                <div>
+                                    <p className="text-sm font-semibold text-violet-950">
+                                        Mobile app banners
+                                    </p>
+                                    <p className="mt-1 text-xs leading-relaxed text-violet-900/80">
+                                        {stats.active_banners === 0
+                                            ? 'No active banners. Add title, description, and image for the Flutter app.'
+                                            : `${stats.active_banners} active banner${stats.active_banners === 1 ? '' : 's'} served via GET /api/v1/banners.`}
+                                    </p>
+                                </div>
+                            </div>
+                            <Link
+                                href={banners_url}
+                                className="inline-flex shrink-0 items-center justify-center gap-1.5 self-stretch rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-700 sm:self-center"
+                            >
+                                Manage banners
+                                <ChevronRight className="h-4 w-4" />
+                            </Link>
+                        </div>
+                    </div>
+
+                    {stats.pending_meal_orders > 0 && (
+                        <div className="overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 via-white to-orange-50/80 shadow-sm">
+                            <div className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                                <div className="flex items-start gap-3">
+                                    <span className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white shadow-md">
+                                        <ChefHat
+                                            className="h-5 w-5"
+                                            aria-hidden
+                                        />
+                                    </span>
+                                    <div>
+                                        <p className="text-sm font-semibold text-amber-950">
+                                            {stats.pending_meal_orders === 1
+                                                ? '1 meal order is waiting for you'
+                                                : `${stats.pending_meal_orders} meal orders are waiting for you`}
+                                        </p>
+                                        <p className="mt-1 text-xs leading-relaxed text-amber-900/80">
+                                            Approve or reject employee meal
+                                            requests before quota and stock are
+                                            applied.
+                                        </p>
+                                    </div>
+                                </div>
+                                <Link
+                                    href={meal_orders_url}
+                                    className="inline-flex shrink-0 items-center justify-center gap-1.5 self-stretch rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-700 sm:self-center"
+                                >
+                                    Open meal orders
+                                    <ChevronRight className="h-4 w-4" />
+                                </Link>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
@@ -528,6 +610,22 @@ export default function AdminDashboard({
                                         }
                                         label="Add Item"
                                         bg="bg-amber-50"
+                                    />
+                                    <QAction
+                                        href="/admin/meal-orders"
+                                        icon={
+                                            <Coffee className="h-4 w-4 text-rose-600" />
+                                        }
+                                        label="Meal Orders"
+                                        bg="bg-rose-50"
+                                    />
+                                    <QAction
+                                        href="/admin/banners"
+                                        icon={
+                                            <Images className="h-4 w-4 text-violet-600" />
+                                        }
+                                        label="Banners"
+                                        bg="bg-violet-50"
                                     />
                                     <QAction
                                         href="/admin/plans"
