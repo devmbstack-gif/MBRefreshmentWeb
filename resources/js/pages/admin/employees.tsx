@@ -260,7 +260,9 @@ export default function AdminEmployees({ employees }: Props) {
                                         <div className="mt-4 flex items-center gap-2">
                                             <button
                                                 onClick={() =>
-                                                    copyEmployeeDetails(employee)
+                                                    copyEmployeeDetails(
+                                                        employee,
+                                                    )
                                                 }
                                                 className="inline-flex items-center justify-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
                                                 title="Copy employee details"
@@ -363,7 +365,9 @@ export default function AdminEmployees({ employees }: Props) {
                                             onClick={() =>
                                                 setDeleteEmployee(employee)
                                             }
-                                            disabled={!canDeleteEmployee(employee)}
+                                            disabled={
+                                                !canDeleteEmployee(employee)
+                                            }
                                             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300 sm:col-span-1"
                                             title={
                                                 !canDeleteEmployee(employee)

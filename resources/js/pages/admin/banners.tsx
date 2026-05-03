@@ -53,9 +53,11 @@ export default function AdminBanners({ banners }: { banners: Banner[] }) {
 
     function submitEdit(e: React.FormEvent) {
         e.preventDefault();
+
         if (!editing) {
             return;
         }
+
         editForm.transform((data) => ({ ...data, _method: 'put' as const }));
         editForm.post(`/admin/banners/${editing.id}`, {
             forceFormData: true,
@@ -286,10 +288,7 @@ export default function AdminBanners({ banners }: { banners: Banner[] }) {
                                                     'is_active',
                                                     banner.is_active,
                                                 );
-                                                editForm.setData(
-                                                    'image',
-                                                    null,
-                                                );
+                                                editForm.setData('image', null);
                                             }}
                                         >
                                             <Pencil className="mr-1 h-3.5 w-3.5" />

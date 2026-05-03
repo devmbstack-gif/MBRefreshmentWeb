@@ -25,7 +25,9 @@ export default function AdminMealOrders({
         .props;
     const [reasons, setReasons] = useState<Record<number, string>>({});
 
-    const pendingCount = requests.filter((request) => request.status === 'pending').length;
+    const pendingCount = requests.filter(
+        (request) => request.status === 'pending',
+    ).length;
 
     function approveRequest(requestId: number) {
         router.post(`/admin/meal-orders/${requestId}/approve`);
@@ -47,7 +49,8 @@ export default function AdminMealOrders({
                         Meal Order Requests
                     </h1>
                     <p className="mt-2 text-sm text-slate-600">
-                        Pending requests need admin approval before meal quota is consumed.
+                        Pending requests need admin approval before meal quota
+                        is consumed.
                     </p>
                     <p className="mt-3 inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
                         Pending: {pendingCount}
@@ -79,12 +82,17 @@ export default function AdminMealOrders({
                                 <div className="flex flex-wrap items-center justify-between gap-3">
                                     <div>
                                         <h3 className="text-base font-semibold text-slate-900">
-                                            {request.employee_name ?? 'Unknown employee'} requested{' '}
-                                            {request.quantity} x {request.item_name ?? 'Item'}
+                                            {request.employee_name ??
+                                                'Unknown employee'}{' '}
+                                            requested {request.quantity} x{' '}
+                                            {request.item_name ?? 'Item'}
                                         </h3>
                                         <p className="mt-1 text-sm text-slate-500">
-                                            Category: {request.item_category ?? 'N/A'} | Requested:{' '}
-                                            {request.requested_at ?? 'Unknown date'}
+                                            Category:{' '}
+                                            {request.item_category ?? 'N/A'} |
+                                            Requested:{' '}
+                                            {request.requested_at ??
+                                                'Unknown date'}
                                         </p>
                                     </div>
                                     <span
@@ -102,7 +110,11 @@ export default function AdminMealOrders({
 
                                 {request.status === 'pending' ? (
                                     <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                                        <Button onClick={() => approveRequest(request.id)}>
+                                        <Button
+                                            onClick={() =>
+                                                approveRequest(request.id)
+                                            }
+                                        >
                                             Approve
                                         </Button>
                                         <Input
@@ -111,22 +123,27 @@ export default function AdminMealOrders({
                                             onChange={(event) =>
                                                 setReasons((prev) => ({
                                                     ...prev,
-                                                    [request.id]: event.target.value,
+                                                    [request.id]:
+                                                        event.target.value,
                                                 }))
                                             }
                                         />
                                         <Button
                                             variant="destructive"
-                                            onClick={() => rejectRequest(request.id)}
+                                            onClick={() =>
+                                                rejectRequest(request.id)
+                                            }
                                         >
                                             Reject
                                         </Button>
                                     </div>
                                 ) : (
                                     <p className="mt-3 text-sm text-slate-500">
-                                        Processed by {request.processed_by ?? 'Admin'} at{' '}
+                                        Processed by{' '}
+                                        {request.processed_by ?? 'Admin'} at{' '}
                                         {request.processed_at ?? 'N/A'}
-                                        {request.status === 'rejected' && request.rejection_reason
+                                        {request.status === 'rejected' &&
+                                        request.rejection_reason
                                             ? ` | Reason: ${request.rejection_reason}`
                                             : ''}
                                     </p>

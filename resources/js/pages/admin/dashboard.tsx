@@ -96,8 +96,8 @@ function avatarBg(name: string) {
     let h = 0;
 
     for (const c of name) {
-h += c.charCodeAt(0);
-}
+        h += c.charCodeAt(0);
+    }
 
     return avatarPalette[h % avatarPalette.length];
 }
@@ -254,7 +254,10 @@ export default function AdminDashboard({
                             <div className="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
                                 <div className="flex items-start gap-3">
                                     <span className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white shadow-md">
-                                        <ChefHat className="h-5 w-5" aria-hidden />
+                                        <ChefHat
+                                            className="h-5 w-5"
+                                            aria-hidden
+                                        />
                                     </span>
                                     <div>
                                         <p className="text-sm font-semibold text-amber-950">

@@ -342,7 +342,9 @@ export default function EmployeeQuota({ quotas, employee_name }: Props) {
                                 >
                                     {isUsing
                                         ? 'Processing…'
-                                        : isMealCategory(confirmQuota.item_category)
+                                        : isMealCategory(
+                                                confirmQuota.item_category,
+                                            )
                                           ? 'Send request'
                                           : 'Confirm use'}
                                 </Button>

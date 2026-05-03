@@ -13,7 +13,7 @@ import {
     Tags,
     Trash2,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -78,12 +78,12 @@ export default function AdminItems({ items, categories }: Props) {
 
     const getStockState = (item: Item) => {
         if (item.stock_quantity === 0) {
-return 'Out of stock';
-}
+            return 'Out of stock';
+        }
 
         if (item.stock_quantity <= item.low_stock_threshold) {
-return 'Low stock';
-}
+            return 'Low stock';
+        }
 
         return 'In stock';
     };
@@ -393,16 +393,16 @@ function SummaryCard({ label, value }: { label: string; value: number }) {
 }
 
 function formatCategory(category: string) {
-    return (
-        category
-            .toString()
-            .replace(/[_-]+/g, ' ')
-            .replace(/\b\w/g, (char) => char.toUpperCase())
-    );
+    return category
+        .toString()
+        .replace(/[_-]+/g, ' ')
+        .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 function getCategoryColor(category: string) {
-    return categoryColors[category.toLowerCase()] ?? 'bg-slate-100 text-slate-700';
+    return (
+        categoryColors[category.toLowerCase()] ?? 'bg-slate-100 text-slate-700'
+    );
 }
 
 function resolveInitialCategoryId(
@@ -417,6 +417,7 @@ function resolveInitialCategoryId(
     const byName = categories.find(
         (c) => c.name.toLowerCase().trim() === normalized,
     );
+
     if (byName) {
         return byName.id;
     }
@@ -495,7 +496,10 @@ function ItemModal({
     const initialCategoryId = resolveInitialCategoryId(item, categories);
     const form = useForm({
         name: item?.name ?? '',
-        category_id: initialCategoryId > 0 ? initialCategoryId : (categories[0]?.id ?? 0),
+        category_id:
+            initialCategoryId > 0
+                ? initialCategoryId
+                : (categories[0]?.id ?? 0),
         description: item?.description ?? '',
         image: null as File | null,
         stock_quantity: item?.stock_quantity ?? 0,
@@ -598,7 +602,9 @@ function ItemModal({
                                         <select
                                             value={
                                                 form.data.category_id > 0
-                                                    ? String(form.data.category_id)
+                                                    ? String(
+                                                          form.data.category_id,
+                                                      )
                                                     : ''
                                             }
                                             onChange={(e) =>
@@ -725,21 +731,21 @@ function CategoryImagePicker({
     currentImageUrl: string | null;
     onChange: (next: File | null) => void;
 }) {
-    const [objectUrl, setObjectUrl] = useState<string | null>(null);
+    const objectUrl = useMemo(() => {
+        if (!file) {
+            return null;
+        }
+
+        return URL.createObjectURL(file);
+    }, [file]);
 
     useEffect(() => {
-        if (!file) {
-            setObjectUrl(null);
-
+        if (!objectUrl) {
             return undefined;
         }
 
-        const url = URL.createObjectURL(file);
-
-        setObjectUrl(url);
-
-        return () => URL.revokeObjectURL(url);
-    }, [file]);
+        return () => URL.revokeObjectURL(objectUrl);
+    }, [objectUrl]);
 
     const displaySrc = objectUrl ?? currentImageUrl ?? null;
 
@@ -762,7 +768,10 @@ function CategoryImagePicker({
                 <div className="min-w-0 flex-1 space-y-2">
                     <label className="flex cursor-pointer flex-col items-stretch gap-2 sm:flex-row sm:items-center">
                         <span className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-dashed border-emerald-300 bg-white/90 px-4 py-3 text-sm font-medium text-emerald-800 shadow-sm transition hover:border-emerald-400 hover:bg-emerald-50/80">
-                            <ImagePlus className="h-4 w-4 shrink-0" aria-hidden />
+                            <ImagePlus
+                                className="h-4 w-4 shrink-0"
+                                aria-hidden
+                            />
                             <span className="truncate">
                                 {file ? file.name : 'Choose category image'}
                             </span>
@@ -805,7 +814,9 @@ function CategoryModal({
     onClose: () => void;
     categories: Category[];
 }) {
-    const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+    const [editingCategory, setEditingCategory] = useState<Category | null>(
+        null,
+    );
     const createForm = useForm({
         name: '',
         image: null as File | null,
@@ -825,9 +836,11 @@ function CategoryModal({
 
     function submitEdit(e: React.FormEvent) {
         e.preventDefault();
+
         if (!editingCategory) {
             return;
         }
+
         editForm.transform((data) => ({ ...data, _method: 'put' as const }));
         editForm.post(`/admin/categories/${editingCategory.id}`, {
             forceFormData: true,
@@ -1096,7 +1109,8 @@ function CategoryModal({
                                                             </Label>
                                                             <Input
                                                                 value={
-                                                                    editForm.data
+                                                                    editForm
+                                                                        .data
                                                                         .name
                                                                 }
                                                                 onChange={(e) =>

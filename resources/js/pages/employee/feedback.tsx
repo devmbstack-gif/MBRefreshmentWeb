@@ -59,8 +59,8 @@ export default function EmployeeFeedback({
 
         for (const reply of replies) {
             if (!reply.reply_to_id) {
-continue;
-}
+                continue;
+            }
 
             const existing = map.get(reply.reply_to_id) ?? [];
             existing.push(reply);
