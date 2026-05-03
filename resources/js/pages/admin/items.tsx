@@ -4,13 +4,16 @@ import {
     Box,
     Coffee,
     ImagePlus,
+    LayoutGrid,
     Package2,
     Pencil,
     Plus,
     Power,
+    Sparkles,
+    Tags,
     Trash2,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -23,11 +26,13 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 
 type Item = {
     id: number;
     name: string;
     category: string;
+    category_id?: number | null;
     description: string | null;
     image_url?: string | null;
     stock_quantity: number;
@@ -37,16 +42,15 @@ type Item = {
 
 type Props = {
     items: Item[];
+    categories: Category[];
 };
 
-const categoryLabels: Record<string, string> = {
-    food: 'Food',
-    beverage: 'Beverage',
-    snack: 'Snack',
-    other: 'Other',
+type Category = {
+    id: number;
+    name: string;
+    slug: string;
+    image_url?: string | null;
 };
-
-const defaultCategories = ['food', 'beverage', 'snack', 'other'];
 
 const categoryColors: Record<string, string> = {
     food: 'bg-orange-100 text-orange-700',
@@ -55,18 +59,13 @@ const categoryColors: Record<string, string> = {
     other: 'bg-slate-100 text-slate-700',
 };
 
-export default function AdminItems({ items }: Props) {
+export default function AdminItems({ items, categories }: Props) {
     const { flash } = usePage<{ flash: { success?: string; error?: string } }>()
         .props;
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [editingItem, setEditingItem] = useState<Item | null>(null);
     const [deletingItem, setDeletingItem] = useState<Item | null>(null);
-    const categoryOptions = Array.from(
-        new Set([
-            ...defaultCategories,
-            ...items.map((item) => item.category).filter(Boolean),
-        ]),
-    ).sort((a, b) => a.localeCompare(b));
+    const [showCategoryModal, setShowCategoryModal] = useState(false);
 
     const activeItems = items.filter((item) => item.is_active).length;
     const lowStockItems = items.filter(
@@ -136,13 +135,24 @@ return 'Low stock';
                             availability in one place.
                         </p>
                     </div>
-                    <Button
-                        onClick={() => setShowCreateModal(true)}
-                        className="gap-2 rounded-xl px-4 py-2.5 shadow-sm"
-                    >
-                        <Plus className="h-4 w-4" />
-                        Add Item
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setShowCategoryModal(true)}
+                            className="gap-2 rounded-xl px-4 py-2.5"
+                        >
+                            <Tags className="h-4 w-4" />
+                            Categories
+                        </Button>
+                        <Button
+                            onClick={() => setShowCreateModal(true)}
+                            className="gap-2 rounded-xl px-4 py-2.5 shadow-sm"
+                        >
+                            <Plus className="h-4 w-4" />
+                            Add Item
+                        </Button>
+                    </div>
                 </div>
 
                 {flash?.success && (
@@ -338,20 +348,28 @@ return 'Low stock';
             </div>
 
             <ItemModal
+                key={`create-${categories.map((c) => c.id).join('-')}-${showCreateModal}`}
                 open={showCreateModal}
                 onClose={() => setShowCreateModal(false)}
                 item={null}
-                categoryOptions={categoryOptions}
+                categories={categories}
             />
 
             {editingItem && (
                 <ItemModal
+                    key={`edit-${editingItem.id}-${categories.map((c) => c.id).join('-')}`}
                     open={true}
                     onClose={() => setEditingItem(null)}
                     item={editingItem}
-                    categoryOptions={categoryOptions}
+                    categories={categories}
                 />
             )}
+
+            <CategoryModal
+                open={showCategoryModal}
+                onClose={() => setShowCategoryModal(false)}
+                categories={categories}
+            />
 
             {deletingItem && (
                 <DeactivateItemModal
@@ -376,15 +394,34 @@ function SummaryCard({ label, value }: { label: string; value: number }) {
 
 function formatCategory(category: string) {
     return (
-        categoryLabels[category] ??
         category
+            .toString()
             .replace(/[_-]+/g, ' ')
             .replace(/\b\w/g, (char) => char.toUpperCase())
     );
 }
 
 function getCategoryColor(category: string) {
-    return categoryColors[category] ?? 'bg-slate-100 text-slate-700';
+    return categoryColors[category.toLowerCase()] ?? 'bg-slate-100 text-slate-700';
+}
+
+function resolveInitialCategoryId(
+    item: Item | null,
+    categories: Category[],
+): number {
+    if (item?.category_id != null && item.category_id > 0) {
+        return item.category_id;
+    }
+
+    const normalized = (item?.category ?? '').toLowerCase().trim();
+    const byName = categories.find(
+        (c) => c.name.toLowerCase().trim() === normalized,
+    );
+    if (byName) {
+        return byName.id;
+    }
+
+    return categories[0]?.id ?? 0;
 }
 
 function InfoStat({
@@ -447,17 +484,18 @@ function ItemModal({
     open,
     onClose,
     item,
-    categoryOptions,
+    categories,
 }: {
     open: boolean;
     onClose: () => void;
     item: Item | null;
-    categoryOptions: string[];
+    categories: Category[];
 }) {
     const isEditing = item !== null;
+    const initialCategoryId = resolveInitialCategoryId(item, categories);
     const form = useForm({
         name: item?.name ?? '',
-        category: item?.category ?? 'food',
+        category_id: initialCategoryId > 0 ? initialCategoryId : (categories[0]?.id ?? 0),
         description: item?.description ?? '',
         image: null as File | null,
         stock_quantity: item?.stock_quantity ?? 0,
@@ -554,29 +592,33 @@ function ItemModal({
 
                                 <FormField
                                     label="Category"
-                                    error={form.errors.category}
+                                    error={form.errors.category_id}
                                 >
                                     <>
-                                        <Input
-                                            value={form.data.category}
+                                        <select
+                                            value={
+                                                form.data.category_id > 0
+                                                    ? String(form.data.category_id)
+                                                    : ''
+                                            }
                                             onChange={(e) =>
                                                 form.setData(
-                                                    'category',
-                                                    e.target.value,
+                                                    'category_id',
+                                                    Number(e.target.value),
                                                 )
                                             }
-                                            placeholder="food"
-                                            list="item-category-options"
-                                            className="rounded-xl"
-                                        />
-                                        <datalist id="item-category-options">
-                                            {categoryOptions.map((category) => (
+                                            className="h-10 w-full rounded-xl border border-input bg-background px-3 text-sm"
+                                            disabled={categories.length === 0}
+                                        >
+                                            {categories.map((category) => (
                                                 <option
-                                                    key={category}
-                                                    value={category}
-                                                />
+                                                    key={category.id}
+                                                    value={String(category.id)}
+                                                >
+                                                    {category.name}
+                                                </option>
                                             ))}
-                                        </datalist>
+                                        </select>
                                     </>
                                 </FormField>
 
@@ -668,6 +710,482 @@ function ItemModal({
                             </Button>
                         </div>
                     </form>
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
+function CategoryImagePicker({
+    file,
+    currentImageUrl,
+    onChange,
+}: {
+    file: File | null;
+    currentImageUrl: string | null;
+    onChange: (next: File | null) => void;
+}) {
+    const [objectUrl, setObjectUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!file) {
+            setObjectUrl(null);
+
+            return undefined;
+        }
+
+        const url = URL.createObjectURL(file);
+
+        setObjectUrl(url);
+
+        return () => URL.revokeObjectURL(url);
+    }, [file]);
+
+    const displaySrc = objectUrl ?? currentImageUrl ?? null;
+
+    return (
+        <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-white via-emerald-50/30 to-cyan-50/40 p-4 shadow-sm">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                <div className="shrink-0">
+                    {displaySrc ? (
+                        <img
+                            src={displaySrc}
+                            alt=""
+                            className="h-20 w-20 rounded-2xl border-4 border-white object-cover shadow-md ring-1 ring-emerald-100"
+                        />
+                    ) : (
+                        <div className="flex h-20 w-20 items-center justify-center rounded-2xl border-4 border-white bg-gradient-to-br from-emerald-400 to-teal-500 text-white shadow-md ring-1 ring-emerald-100">
+                            <Tags className="h-8 w-8 opacity-90" aria-hidden />
+                        </div>
+                    )}
+                </div>
+                <div className="min-w-0 flex-1 space-y-2">
+                    <label className="flex cursor-pointer flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+                        <span className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-dashed border-emerald-300 bg-white/90 px-4 py-3 text-sm font-medium text-emerald-800 shadow-sm transition hover:border-emerald-400 hover:bg-emerald-50/80">
+                            <ImagePlus className="h-4 w-4 shrink-0" aria-hidden />
+                            <span className="truncate">
+                                {file ? file.name : 'Choose category image'}
+                            </span>
+                        </span>
+                        <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp,image/jpg"
+                            className="sr-only"
+                            onChange={(e) =>
+                                onChange(e.target.files?.[0] ?? null)
+                            }
+                        />
+                    </label>
+                    {file && (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 self-start rounded-lg text-xs text-slate-600 hover:text-rose-700"
+                            onClick={() => onChange(null)}
+                        >
+                            Remove selected file
+                        </Button>
+                    )}
+                    <p className="text-xs leading-relaxed text-slate-500">
+                        JPG, PNG, or WEBP. Used in filters and item cards.
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function CategoryModal({
+    open,
+    onClose,
+    categories,
+}: {
+    open: boolean;
+    onClose: () => void;
+    categories: Category[];
+}) {
+    const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+    const createForm = useForm({
+        name: '',
+        image: null as File | null,
+    });
+    const editForm = useForm({
+        name: '',
+        image: null as File | null,
+    });
+
+    function submitCreate(e: React.FormEvent) {
+        e.preventDefault();
+        createForm.post('/admin/categories', {
+            forceFormData: true,
+            onSuccess: () => createForm.reset(),
+        });
+    }
+
+    function submitEdit(e: React.FormEvent) {
+        e.preventDefault();
+        if (!editingCategory) {
+            return;
+        }
+        editForm.transform((data) => ({ ...data, _method: 'put' as const }));
+        editForm.post(`/admin/categories/${editingCategory.id}`, {
+            forceFormData: true,
+            onSuccess: () => {
+                editForm.transform((data) => data);
+                setEditingCategory(null);
+            },
+            onError: () => editForm.transform((data) => data),
+        });
+    }
+
+    return (
+        <Dialog open={open} onOpenChange={onClose}>
+            <DialogContent className="flex max-h-[90vh] w-[calc(100vw-1.5rem)] max-w-2xl flex-col gap-0 overflow-hidden rounded-3xl border border-emerald-100 bg-white p-0 shadow-2xl sm:w-full">
+                <DialogHeader className="shrink-0 space-y-2 border-b border-emerald-100 bg-gradient-to-r from-white via-emerald-50/70 to-cyan-50/50 px-6 py-5 text-left sm:px-8">
+                    <div className="flex items-start gap-3">
+                        <span className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25">
+                            <Sparkles className="h-5 w-5" aria-hidden />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                            <DialogTitle className="text-xl font-bold tracking-tight text-slate-900">
+                                Manage categories
+                            </DialogTitle>
+                            <DialogDescription className="mt-1.5 text-sm leading-relaxed text-slate-600">
+                                Organize how items are grouped. Names and images
+                                power filters and a polished catalog experience.
+                            </DialogDescription>
+                        </div>
+                    </div>
+                </DialogHeader>
+
+                <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8">
+                    <div className="mx-auto max-w-xl space-y-8">
+                        <section className="rounded-2xl border border-slate-200/90 bg-gradient-to-b from-slate-50/90 to-white p-5 shadow-sm sm:p-6">
+                            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                                <div className="flex items-center gap-3">
+                                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-md shadow-emerald-600/20">
+                                        <Plus className="h-5 w-5" aria-hidden />
+                                    </span>
+                                    <div>
+                                        <h3 className="text-base font-semibold text-slate-900">
+                                            Create a category
+                                        </h3>
+                                        <p className="text-xs text-slate-500">
+                                            Appears when you assign items and in
+                                            employee filters.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <form onSubmit={submitCreate} className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-medium text-slate-800">
+                                        Display name
+                                    </Label>
+                                    <Input
+                                        value={createForm.data.name}
+                                        onChange={(e) =>
+                                            createForm.setData(
+                                                'name',
+                                                e.target.value,
+                                            )
+                                        }
+                                        placeholder="e.g. Drinks, Snacks, Meals"
+                                        className="h-11 rounded-xl border-slate-200 bg-white text-base shadow-sm transition focus-visible:border-emerald-400"
+                                    />
+                                    {createForm.errors.name && (
+                                        <p className="text-xs text-destructive">
+                                            {createForm.errors.name}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-medium text-slate-800">
+                                        Image
+                                    </Label>
+                                    <CategoryImagePicker
+                                        file={createForm.data.image}
+                                        currentImageUrl={null}
+                                        onChange={(f) =>
+                                            createForm.setData('image', f)
+                                        }
+                                    />
+                                    {createForm.errors.image && (
+                                        <p className="text-xs text-destructive">
+                                            {createForm.errors.image}
+                                        </p>
+                                    )}
+                                </div>
+
+                                <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="rounded-xl border-slate-200"
+                                        onClick={() => {
+                                            createForm.reset();
+                                            onClose();
+                                        }}
+                                    >
+                                        Close
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        disabled={createForm.processing}
+                                        className="rounded-xl bg-emerald-600 px-6 font-semibold shadow-md shadow-emerald-600/25 hover:bg-emerald-700"
+                                    >
+                                        {createForm.processing ? (
+                                            <span>Saving…</span>
+                                        ) : (
+                                            <span className="inline-flex items-center gap-2">
+                                                <Plus className="h-4 w-4" />
+                                                Add category
+                                            </span>
+                                        )}
+                                    </Button>
+                                </div>
+                            </form>
+                        </section>
+
+                        <Separator className="bg-gradient-to-r from-transparent via-emerald-200/60 to-transparent" />
+
+                        <section className="space-y-4">
+                            <div className="flex flex-wrap items-end justify-between gap-3">
+                                <div className="flex items-center gap-2">
+                                    <LayoutGrid
+                                        className="h-5 w-5 text-emerald-600"
+                                        aria-hidden
+                                    />
+                                    <div>
+                                        <h3 className="text-base font-semibold text-slate-900">
+                                            Your categories
+                                        </h3>
+                                        <p className="text-xs text-slate-500">
+                                            {categories.length}{' '}
+                                            {categories.length === 1
+                                                ? 'category'
+                                                : 'categories'}{' '}
+                                            in the library
+                                        </p>
+                                    </div>
+                                </div>
+                                <span className="inline-flex items-center rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
+                                    {categories.length} total
+                                </span>
+                            </div>
+
+                            {categories.length === 0 ? (
+                                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-14 text-center">
+                                    <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-100">
+                                        <Tags className="h-6 w-6 text-slate-400" />
+                                    </div>
+                                    <p className="text-sm font-medium text-slate-700">
+                                        No categories yet
+                                    </p>
+                                    <p className="mt-1 text-xs text-slate-500">
+                                        Add your first category above to get
+                                        started.
+                                    </p>
+                                </div>
+                            ) : (
+                                <ul className="space-y-3">
+                                    {categories.map((category) => {
+                                        const isEditing =
+                                            editingCategory?.id === category.id;
+
+                                        return (
+                                            <li key={category.id}>
+                                                <div
+                                                    className={`group rounded-2xl border bg-white p-4 shadow-sm transition-all sm:p-5 ${
+                                                        isEditing
+                                                            ? 'border-emerald-300 ring-2 ring-emerald-100'
+                                                            : 'border-slate-200/90 hover:border-emerald-200/80 hover:shadow-md'
+                                                    }`}
+                                                >
+                                                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                                        <div className="flex min-w-0 flex-1 items-center gap-4">
+                                                            <div className="relative shrink-0">
+                                                                {category.image_url ? (
+                                                                    <img
+                                                                        src={
+                                                                            category.image_url
+                                                                        }
+                                                                        alt=""
+                                                                        className="h-14 w-14 rounded-2xl border-2 border-white object-cover shadow-md ring-1 ring-slate-100"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-white bg-gradient-to-br from-slate-100 to-slate-200 text-slate-500 shadow-inner ring-1 ring-slate-100">
+                                                                        <Tags className="h-6 w-6" />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="min-w-0 flex-1">
+                                                                <p className="truncate text-base font-semibold text-slate-900">
+                                                                    {
+                                                                        category.name
+                                                                    }
+                                                                </p>
+                                                                <div className="mt-1.5 flex flex-wrap items-center gap-2">
+                                                                    <span className="inline-flex max-w-full items-center rounded-full bg-slate-100 px-2.5 py-0.5 font-mono text-[11px] font-medium tracking-wide text-slate-600 uppercase">
+                                                                        {
+                                                                            category.slug
+                                                                        }
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="rounded-xl border-slate-200 font-medium shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50/60"
+                                                                onClick={() => {
+                                                                    setEditingCategory(
+                                                                        category,
+                                                                    );
+                                                                    editForm.setData(
+                                                                        'name',
+                                                                        category.name,
+                                                                    );
+                                                                    editForm.setData(
+                                                                        'image',
+                                                                        null,
+                                                                    );
+                                                                }}
+                                                            >
+                                                                <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                                                                Edit
+                                                            </Button>
+                                                            <Button
+                                                                type="button"
+                                                                variant="destructive"
+                                                                size="sm"
+                                                                className="rounded-xl font-medium shadow-sm"
+                                                                onClick={() =>
+                                                                    router.delete(
+                                                                        `/admin/categories/${category.id}`,
+                                                                    )
+                                                                }
+                                                            >
+                                                                <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                                                                Delete
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {isEditing && (
+                                                    <form
+                                                        onSubmit={submitEdit}
+                                                        className="mt-3 space-y-4 rounded-2xl border border-emerald-200/80 bg-gradient-to-b from-emerald-50/50 to-white p-4 shadow-inner sm:p-5"
+                                                    >
+                                                        <p className="text-sm font-semibold text-slate-900">
+                                                            Edit “
+                                                            {
+                                                                editingCategory.name
+                                                            }
+                                                            ”
+                                                        </p>
+                                                        <div className="space-y-2">
+                                                            <Label className="text-sm font-medium text-slate-800">
+                                                                Display name
+                                                            </Label>
+                                                            <Input
+                                                                value={
+                                                                    editForm.data
+                                                                        .name
+                                                                }
+                                                                onChange={(e) =>
+                                                                    editForm.setData(
+                                                                        'name',
+                                                                        e.target
+                                                                            .value,
+                                                                    )
+                                                                }
+                                                                className="h-11 rounded-xl border-slate-200 bg-white shadow-sm"
+                                                            />
+                                                            {editForm.errors
+                                                                .name && (
+                                                                <p className="text-xs text-destructive">
+                                                                    {
+                                                                        editForm
+                                                                            .errors
+                                                                            .name
+                                                                    }
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <Label className="text-sm font-medium text-slate-800">
+                                                                New image
+                                                                (optional)
+                                                            </Label>
+                                                            <CategoryImagePicker
+                                                                file={
+                                                                    editForm
+                                                                        .data
+                                                                        .image
+                                                                }
+                                                                currentImageUrl={
+                                                                    editingCategory.image_url ??
+                                                                    null
+                                                                }
+                                                                onChange={(f) =>
+                                                                    editForm.setData(
+                                                                        'image',
+                                                                        f,
+                                                                    )
+                                                                }
+                                                            />
+                                                            {editForm.errors
+                                                                .image && (
+                                                                <p className="text-xs text-destructive">
+                                                                    {
+                                                                        editForm
+                                                                            .errors
+                                                                            .image
+                                                                    }
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end">
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                className="rounded-xl border-slate-200"
+                                                                onClick={() =>
+                                                                    setEditingCategory(
+                                                                        null,
+                                                                    )
+                                                                }
+                                                            >
+                                                                Cancel
+                                                            </Button>
+                                                            <Button
+                                                                type="submit"
+                                                                disabled={
+                                                                    editForm.processing
+                                                                }
+                                                                className="rounded-xl bg-emerald-600 font-semibold shadow-md shadow-emerald-600/25 hover:bg-emerald-700"
+                                                            >
+                                                                {editForm.processing
+                                                                    ? 'Saving…'
+                                                                    : 'Save changes'}
+                                                            </Button>
+                                                        </div>
+                                                    </form>
+                                                )}
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            )}
+                        </section>
+                    </div>
                 </div>
             </DialogContent>
         </Dialog>

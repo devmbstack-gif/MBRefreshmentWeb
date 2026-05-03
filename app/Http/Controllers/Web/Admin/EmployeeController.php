@@ -51,6 +51,7 @@ class EmployeeController extends Controller
                 'user_id' => $employee->user_id,
                 'name' => $employee->user->name,
                 'email' => $employee->user->email,
+                'shareable_password' => $employee->user->shareable_password,
                 'avatar' => $employee->user->avatar,
                 'employee_code' => $employee->employee_code,
                 'department' => $employee->department,
@@ -78,6 +79,7 @@ class EmployeeController extends Controller
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => $request->password,
+                'shareable_password' => $request->password,
                 'role' => 'employee',
                 'avatar' => $avatar,
                 'is_active' => true,
@@ -108,6 +110,7 @@ class EmployeeController extends Controller
 
             if ($request->filled('password')) {
                 $userData['password'] = $request->password;
+                $userData['shareable_password'] = $request->password;
             }
 
             if ($request->file('avatar')) {
@@ -155,6 +158,7 @@ class EmployeeController extends Controller
             }
 
             DB::table('quota_usages')->where('employee_id', $employee->id)->delete();
+            DB::table('meal_order_requests')->where('employee_id', $employee->id)->delete();
             DB::table('employee_quotas')->where('employee_id', $employee->id)->delete();
 
             $user = $employee->user;

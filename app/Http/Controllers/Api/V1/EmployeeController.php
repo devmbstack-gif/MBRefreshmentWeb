@@ -50,14 +50,19 @@ class EmployeeController extends Controller
         $quotas = EmployeeQuota::query()
             ->where('employee_id', $employee->id)
             ->whereIn('status', ['active', 'exhausted'])
+            ->whereHas('plan', fn ($q) => $q->where('is_active', true))
+            ->whereHas('item', fn ($q) => $q->where('is_active', true))
             ->with(['item', 'plan'])
             ->get()
             ->map(fn ($quota) => [
                 'id' => $quota->id,
                 'item_name' => $quota->item->name,
                 'item_category' => $quota->item->category,
+                'item_description' => $quota->item->description,
                 'item_image_url' => $this->buildImageUrl($quota->item->image_url),
                 'plan_title' => $quota->plan->title,
+                'plan_description' => $quota->plan->description,
+                'plan_period_type' => $quota->plan->period_type,
                 'plan_ends_at' => $quota->plan->ends_at->toDateString(),
                 'total_qty' => $quota->total_qty,
                 'used_qty' => $quota->used_qty,
@@ -95,8 +100,24 @@ class EmployeeController extends Controller
         }
 
         $quantity = $validated['quantity'] ?? 1;
+        $isMealCategory = strcasecmp(trim((string) $employeeQuota->item?->category), 'meal') === 0;
 
         try {
+            if ($isMealCategory) {
+                $mealRequest = $quotaService->requestMealQuota($employeeQuota, $quantity);
+
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Meal request submitted and waiting for admin approval.',
+                    'request' => [
+                        'id' => $mealRequest->id,
+                        'status' => $mealRequest->status,
+                        'quantity' => $mealRequest->quantity,
+                        'requested_at' => $mealRequest->requested_at?->toIso8601String(),
+                    ],
+                ], 201);
+            }
+
             $quotaService->useQuota($employeeQuota, $quantity);
         } catch (\Exception $e) {
             return response()->json([
@@ -113,8 +134,13 @@ class EmployeeController extends Controller
             'quota' => [
                 'id' => $employeeQuota->id,
                 'item_name' => $employeeQuota->item->name,
+                'item_category' => $employeeQuota->item->category,
+                'item_description' => $employeeQuota->item->description,
                 'item_image_url' => $this->buildImageUrl($employeeQuota->item->image_url),
                 'plan_title' => $employeeQuota->plan->title,
+                'plan_description' => $employeeQuota->plan->description,
+                'plan_period_type' => $employeeQuota->plan->period_type,
+                'plan_ends_at' => $employeeQuota->plan->ends_at->toDateString(),
                 'total_qty' => $employeeQuota->total_qty,
                 'used_qty' => $employeeQuota->used_qty,
                 'remaining_qty' => $employeeQuota->remaining_qty,
@@ -136,6 +162,7 @@ class EmployeeController extends Controller
                 'id' => $usage->id,
                 'item_name' => $usage->item->name,
                 'item_category' => $usage->item->category,
+                'item_description' => $usage->item->description,
                 'item_image_url' => $this->buildImageUrl($usage->item->image_url),
                 'quantity_used' => $usage->quantity_used,
                 'used_at' => $usage->used_at?->toIso8601String(),
@@ -193,6 +220,22 @@ class EmployeeController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Notification marked as read.',
+        ]);
+    }
+
+    public function markAllNotificationsAsRead(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $updated = AppNotification::query()
+            ->where('user_id', $user->id)
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
+        return response()->json([
+            'status' => true,
+            'message' => 'All notifications marked as read.',
+            'marked_count' => $updated,
         ]);
     }
 

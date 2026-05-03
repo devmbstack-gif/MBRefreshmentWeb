@@ -1,11 +1,13 @@
 <?php
 
+use App\Services\QuotaService;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\IsEmployee;
 use App\Http\Middleware\IsSuperAdmin;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -56,4 +58,11 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return null;
         });
-    })->create();
+    })
+    ->withSchedule(function (Schedule $schedule): void {
+        $schedule->call(fn () => app(QuotaService::class)->expireOldQuotas())
+            ->dailyAt('00:10')
+            ->name('expire-old-quotas')
+            ->withoutOverlapping();
+    })
+    ->create();

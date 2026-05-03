@@ -2,6 +2,7 @@ import { Head, router, useForm, usePage } from '@inertiajs/react';
 import {
     Briefcase,
     CalendarDays,
+    Copy,
     Mail,
     Pencil,
     Plus,
@@ -11,6 +12,7 @@ import {
     UserRound,
 } from 'lucide-react';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import PasswordInput from '@/components/password-input';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,6 +32,7 @@ type Employee = {
     user_id: number;
     name: string;
     email: string;
+    shareable_password: string | null;
     avatar: string | null;
     employee_code: string;
     department: string | null;
@@ -82,6 +85,31 @@ function getAvatarGradient(name: string) {
 }
 
 export default function AdminEmployees({ employees }: Props) {
+    function copyEmployeeDetails(employee: Employee) {
+        const details = [
+            `Name: ${employee.name}`,
+            `Company Email: ${employee.email}`,
+            `Password: ${employee.shareable_password ?? 'Not available'}`,
+            `Employee Code: ${employee.employee_code}`,
+            `Department: ${employee.department ?? 'Not assigned'}`,
+            `Job Role: ${employee.designation ?? 'Not added'}`,
+            `Personal Email: ${employee.personal_email ?? 'Not added'}`,
+            `Joining Date: ${employee.joining_date ?? 'Not added'}`,
+            `Status: ${employee.is_active ? 'Active' : 'Inactive'}`,
+        ].join('\n');
+
+        navigator.clipboard
+            .writeText(details)
+            .then(() => toast.success('Employee details copied successfully.'))
+            .catch(() =>
+                toast.error('Copy failed. Please allow clipboard permission.'),
+            );
+    }
+
+    function canDeleteEmployee(employee: Employee) {
+        return !employee.is_active;
+    }
+
     const { flash } = usePage<{ flash: { success?: string; error?: string } }>()
         .props;
 
@@ -229,17 +257,29 @@ export default function AdminEmployees({ employees }: Props) {
                                                 </p>
                                             </div>
                                         </div>
-                                        <span
-                                            className={`mt-4 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                                                employee.is_active
-                                                    ? 'bg-emerald-100 text-emerald-700'
-                                                    : 'bg-rose-100 text-rose-700'
-                                            }`}
-                                        >
-                                            {employee.is_active
-                                                ? 'Active'
-                                                : 'Inactive'}
-                                        </span>
+                                        <div className="mt-4 flex items-center gap-2">
+                                            <button
+                                                onClick={() =>
+                                                    copyEmployeeDetails(employee)
+                                                }
+                                                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                                                title="Copy employee details"
+                                            >
+                                                <Copy className="h-3.5 w-3.5" />
+                                                Copy
+                                            </button>
+                                            <span
+                                                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                                                    employee.is_active
+                                                        ? 'bg-emerald-100 text-emerald-700'
+                                                        : 'bg-rose-100 text-rose-700'
+                                                }`}
+                                            >
+                                                {employee.is_active
+                                                    ? 'Active'
+                                                    : 'Inactive'}
+                                            </span>
+                                        </div>
                                     </div>
 
                                     <div className="mt-5 space-y-3">
@@ -323,10 +363,10 @@ export default function AdminEmployees({ employees }: Props) {
                                             onClick={() =>
                                                 setDeleteEmployee(employee)
                                             }
-                                            disabled={employee.is_active}
+                                            disabled={!canDeleteEmployee(employee)}
                                             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-slate-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300 sm:col-span-1"
                                             title={
-                                                employee.is_active
+                                                !canDeleteEmployee(employee)
                                                     ? 'Deactivate before deleting'
                                                     : 'Delete Employee'
                                             }

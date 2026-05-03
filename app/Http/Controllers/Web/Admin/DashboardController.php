@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Models\EmployeeQuota;
 use App\Models\Item;
+use App\Models\Banner;
+use App\Models\MealOrderRequest;
 use App\Models\QuotaPlan;
 use App\Models\QuotaUsage;
 use Illuminate\Support\Facades\Auth;
@@ -25,6 +27,8 @@ class DashboardController extends Controller
             'total_items' => Item::where('is_active', true)->count(),
             'month_usages' => QuotaUsage::whereMonth('used_at', now()->month)
                 ->whereYear('used_at', now()->year)->count(),
+            'pending_meal_orders' => MealOrderRequest::where('status', 'pending')->count(),
+            'active_banners' => Banner::where('is_active', true)->count(),
         ];
 
         $recentUsages = QuotaUsage::with(['employee.user', 'item'])
@@ -73,6 +77,8 @@ class DashboardController extends Controller
             'low_quota_employees' => $lowQuotaEmployees,
             'active_plans' => $activePlans,
             'admin_name' => Auth::user()->name,
+            'meal_orders_url' => route('admin.meal-orders.index'),
+            'banners_url' => route('admin.banners.index'),
         ]);
     }
 }

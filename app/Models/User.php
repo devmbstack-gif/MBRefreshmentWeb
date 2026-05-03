@@ -20,6 +20,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'shareable_password',
         'role',
         'avatar',
         'phone',
@@ -41,6 +42,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'shareable_password' => 'encrypted',
             'two_factor_confirmed_at' => 'datetime',
             'is_active' => 'boolean',
             'fcm_updated_at' => 'datetime',

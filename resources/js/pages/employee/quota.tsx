@@ -22,8 +22,11 @@ type Quota = {
     id: number;
     item_name: string;
     item_category: string;
+    item_description?: string | null;
     item_image_url?: string | null;
     plan_title: string;
+    plan_description?: string | null;
+    plan_period_type?: string | null;
     plan_ends_at: string;
     total_qty: number;
     used_qty: number;
@@ -71,6 +74,12 @@ const categoryConfig: Record<
         pill: 'bg-blue-500',
         label: 'Drinks',
     },
+    meal: {
+        emoji: '🍽️',
+        bg: 'from-orange-400 to-orange-600',
+        pill: 'bg-orange-500',
+        label: 'Meal',
+    },
     other: {
         emoji: '📦',
         bg: 'from-slate-400 to-slate-600',
@@ -83,6 +92,10 @@ function getCatConfig(category: string) {
     const normalized = category?.toLowerCase().trim();
 
     return categoryConfig[normalized] ?? categoryConfig.other;
+}
+
+function isMealCategory(category: string) {
+    return category?.toLowerCase().trim() === 'meal';
 }
 
 export default function EmployeeQuota({ quotas, employee_name }: Props) {
@@ -165,7 +178,7 @@ export default function EmployeeQuota({ quotas, employee_name }: Props) {
                     <div className="flex flex-wrap gap-2">
                         <Button
                             variant="outline"
-                            className="gap-2 self-start rounded-xl border-slate-200 shadow-sm"
+                            className="gap-2 self-start rounded-2xl border-slate-200 shadow-sm"
                             asChild
                         >
                             <Link href="/employee/history">
@@ -175,7 +188,7 @@ export default function EmployeeQuota({ quotas, employee_name }: Props) {
                         </Button>
                         <Button
                             variant="outline"
-                            className="gap-2 self-start rounded-xl border-slate-200 shadow-sm"
+                            className="gap-2 self-start rounded-2xl border-slate-200 shadow-sm"
                             asChild
                         >
                             <Link href="/employee/feedback">
@@ -186,7 +199,7 @@ export default function EmployeeQuota({ quotas, employee_name }: Props) {
                 </div>
 
                 {flash?.success && (
-                    <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                    <div className="flex items-start gap-3 rounded-3xl border border-emerald-200/90 bg-emerald-50/95 px-4 py-3.5 text-sm text-emerald-800 shadow-sm">
                         <CheckCircle2
                             className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600"
                             aria-hidden
@@ -197,7 +210,7 @@ export default function EmployeeQuota({ quotas, employee_name }: Props) {
                     </div>
                 )}
                 {flash?.error && (
-                    <div className="flex items-start gap-3 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+                    <div className="flex items-start gap-3 rounded-3xl border border-rose-200/90 bg-rose-50/95 px-4 py-3.5 text-sm text-rose-800 shadow-sm">
                         <XCircle
                             className="mt-0.5 h-5 w-5 shrink-0 text-rose-600"
                             aria-hidden
@@ -245,27 +258,30 @@ export default function EmployeeQuota({ quotas, employee_name }: Props) {
                     }
                 }}
             >
-                <DialogContent className="max-w-md rounded-3xl border border-emerald-100 p-0 shadow-2xl sm:max-w-md">
+                <DialogContent className="max-w-md gap-0 rounded-3xl border border-emerald-100/90 p-0 shadow-2xl ring-1 ring-emerald-900/5 sm:max-w-md">
                     {confirmQuota && (
                         <>
-                            <DialogHeader className="border-b border-emerald-100 bg-gradient-to-r from-white to-emerald-50/80 px-6 py-5 text-left">
+                            <DialogHeader className="rounded-t-3xl border-b border-emerald-100/80 bg-gradient-to-r from-white to-emerald-50/90 px-6 py-5 text-left">
                                 <DialogTitle className="text-xl font-semibold text-slate-900">
-                                    Confirm usage
+                                    {isMealCategory(confirmQuota.item_category)
+                                        ? 'Confirm meal request'
+                                        : 'Confirm usage'}
                                 </DialogTitle>
                                 <DialogDescription className="text-sm text-slate-600">
-                                    This records one unit from your allowance.
-                                    It cannot be undone.
+                                    {isMealCategory(confirmQuota.item_category)
+                                        ? 'This sends your meal request to admin for approval.'
+                                        : 'This records one unit from your allowance. It cannot be undone.'}
                                 </DialogDescription>
                             </DialogHeader>
-                            <div className="px-6 pt-4 pb-2">
+                            <div className="bg-white/40 px-6 pt-4 pb-1">
                                 <div
-                                    className={`flex flex-col items-center justify-center rounded-2xl bg-gradient-to-br py-8 ${getCatConfig(confirmQuota.item_category).bg}`}
+                                    className={`flex flex-col items-center justify-center rounded-3xl bg-gradient-to-br px-4 py-8 shadow-inner ring-1 ring-white/20 ${getCatConfig(confirmQuota.item_category).bg}`}
                                 >
                                     {confirmQuota.item_image_url ? (
                                         <img
                                             src={confirmQuota.item_image_url}
                                             alt={confirmQuota.item_name}
-                                            className="h-20 w-20 rounded-2xl border border-white/30 object-cover shadow"
+                                            className="h-20 w-20 rounded-3xl border-2 border-white/40 object-cover shadow-lg ring-1 ring-black/10"
                                         />
                                     ) : (
                                         <span
@@ -305,11 +321,11 @@ export default function EmployeeQuota({ quotas, employee_name }: Props) {
                                     )}
                                 </p>
                             </div>
-                            <DialogFooter className="gap-2 border-t border-slate-100 px-6 py-4">
+                            <DialogFooter className="gap-3 rounded-b-3xl border-t border-slate-100/90 bg-gradient-to-b from-slate-50/80 to-white px-6 py-5 sm:justify-end">
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    className="w-full rounded-xl sm:w-auto"
+                                    className="h-11 w-full rounded-2xl border-slate-200 shadow-sm sm:w-auto sm:min-w-[8.5rem]"
                                     onClick={() => setConfirmQuota(null)}
                                     disabled={isUsing}
                                 >
@@ -317,14 +333,18 @@ export default function EmployeeQuota({ quotas, employee_name }: Props) {
                                 </Button>
                                 <Button
                                     type="button"
-                                    className="w-full rounded-xl bg-primary shadow-sm hover:opacity-95 sm:w-auto"
+                                    className="h-11 w-full rounded-2xl bg-primary shadow-md hover:opacity-95 sm:w-auto sm:min-w-[8.5rem]"
                                     onClick={() => handleUse(confirmQuota)}
                                     disabled={
                                         isUsing ||
                                         confirmQuota.remaining_qty < 1
                                     }
                                 >
-                                    {isUsing ? 'Processing…' : 'Confirm use'}
+                                    {isUsing
+                                        ? 'Processing…'
+                                        : isMealCategory(confirmQuota.item_category)
+                                          ? 'Send request'
+                                          : 'Confirm use'}
                                 </Button>
                             </DialogFooter>
                         </>
@@ -348,15 +368,15 @@ function QuotaCard({ quota, onUse }: { quota: Quota; onUse?: () => void }) {
               : 'Expired';
 
     return (
-        <div className="group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-emerald-200/60 hover:shadow-md">
+        <div className="group overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:border-emerald-200/60 hover:shadow-md">
             <div
-                className={`relative flex h-40 items-center justify-center bg-gradient-to-br ${cat.bg}`}
+                className={`relative flex h-40 items-center justify-center rounded-t-3xl bg-gradient-to-br ${cat.bg}`}
             >
                 {quota.item_image_url ? (
                     <img
                         src={quota.item_image_url}
                         alt={quota.item_name}
-                        className="h-20 w-20 rounded-2xl border border-white/30 object-cover shadow-lg transition-transform duration-300 group-hover:scale-105"
+                        className="h-20 w-20 rounded-3xl border-2 border-white/35 object-cover shadow-lg ring-1 ring-black/10 transition-transform duration-300 group-hover:scale-105"
                     />
                 ) : (
                     <span
@@ -389,13 +409,23 @@ function QuotaCard({ quota, onUse }: { quota: Quota; onUse?: () => void }) {
                     </span>
                 )}
             </div>
-            <div className="p-4">
+            <div className="rounded-b-3xl bg-white p-4">
                 <h3 className="text-base font-bold tracking-tight text-slate-900">
                     {quota.item_name}
                 </h3>
                 <p className="mt-0.5 text-xs font-medium text-slate-500">
                     {quota.plan_title}
                 </p>
+                {quota.item_description && (
+                    <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-slate-600">
+                        {quota.item_description}
+                    </p>
+                )}
+                {quota.plan_description && (
+                    <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-500">
+                        {quota.plan_description}
+                    </p>
+                )}
                 <div className="mt-4">
                     <div className="mb-1.5 flex justify-between text-xs font-medium text-slate-500">
                         <span>Used {quota.used_qty}</span>
@@ -435,12 +465,14 @@ function QuotaCard({ quota, onUse }: { quota: Quota; onUse?: () => void }) {
                         <Button
                             type="button"
                             onClick={onUse}
-                            className="h-10 w-full rounded-xl font-semibold shadow-sm"
+                            className="h-11 w-full rounded-2xl font-semibold shadow-sm"
                         >
-                            Use 1 · {quota.item_name}
+                            {isMealCategory(quota.item_category)
+                                ? `Request 1 · ${quota.item_name}`
+                                : `Use 1 · ${quota.item_name}`}
                         </Button>
                     ) : (
-                        <div className="flex h-10 w-full items-center justify-center rounded-xl border border-slate-100 bg-slate-50 text-center text-xs font-semibold text-slate-400">
+                        <div className="flex h-11 w-full items-center justify-center rounded-2xl border border-slate-100 bg-slate-50 text-center text-xs font-semibold text-slate-400">
                             {quota.status === 'exhausted'
                                 ? 'Fully used'
                                 : quota.status === 'expired'
@@ -456,7 +488,7 @@ function QuotaCard({ quota, onUse }: { quota: Quota; onUse?: () => void }) {
 
 function HeroMiniStat({ label, value }: { label: string; value: number }) {
     return (
-        <div className="rounded-2xl border border-white/80 bg-white/80 px-4 py-3 shadow-sm backdrop-blur">
+        <div className="rounded-3xl border border-white/80 bg-white/80 px-4 py-3 shadow-sm backdrop-blur">
             <p className="text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase">
                 {label}
             </p>

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Category;
 use App\Models\Employee;
 use App\Models\Item;
 use App\Models\User;
@@ -54,10 +55,17 @@ class DatabaseSeeder extends Seeder
             ['Biscuits',   'snack',    'Assorted biscuit pack',    36, 8],
         ];
 
-        foreach ($itemsData as [$name, $category, $description, $stockQuantity, $lowStockThreshold]) {
+        foreach ($itemsData as [$name, $categorySlug, $description, $stockQuantity, $lowStockThreshold]) {
+            $categoryModel = Category::query()->where('slug', $categorySlug)->first();
+
+            if (! $categoryModel) {
+                continue;
+            }
+
             Item::create([
                 'name' => $name,
-                'category' => $category,
+                'category' => $categoryModel->name,
+                'category_id' => $categoryModel->id,
                 'description' => $description,
                 'stock_quantity' => $stockQuantity,
                 'low_stock_threshold' => $lowStockThreshold,
