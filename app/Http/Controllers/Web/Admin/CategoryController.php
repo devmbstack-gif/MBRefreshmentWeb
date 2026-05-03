@@ -7,7 +7,6 @@ use App\Models\Category;
 use App\Support\PublicDiskUpload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class CategoryController extends Controller
@@ -51,7 +50,7 @@ class CategoryController extends Controller
 
         if ($request->file('image')) {
             if ($category->image_url) {
-                Storage::disk('public')->delete(str_replace('/storage/', '', $category->image_url));
+                PublicDiskUpload::deleteFromPublicUrl($category->image_url);
             }
 
             $data['image_url'] = PublicDiskUpload::store(
@@ -68,7 +67,7 @@ class CategoryController extends Controller
     public function destroy(Category $category): RedirectResponse
     {
         if ($category->image_url) {
-            Storage::disk('public')->delete(str_replace('/storage/', '', $category->image_url));
+            PublicDiskUpload::deleteFromPublicUrl($category->image_url);
         }
 
         $category->delete();

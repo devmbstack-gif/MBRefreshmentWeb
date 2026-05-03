@@ -9,7 +9,6 @@ use App\Support\PublicDiskUpload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -116,7 +115,7 @@ class EmployeeController extends Controller
 
             if ($request->file('avatar')) {
                 if ($employee->user->avatar) {
-                    Storage::disk('public')->delete(str_replace('/storage/', '', $employee->user->avatar));
+                    PublicDiskUpload::deleteFromPublicUrl($employee->user->avatar);
                 }
 
                 $userData['avatar'] = PublicDiskUpload::store(
@@ -158,7 +157,7 @@ class EmployeeController extends Controller
 
         DB::transaction(function () use ($employee) {
             if ($employee->user->avatar) {
-                Storage::disk('public')->delete(str_replace('/storage/', '', $employee->user->avatar));
+                PublicDiskUpload::deleteFromPublicUrl($employee->user->avatar);
             }
 
             DB::table('quota_usages')->where('employee_id', $employee->id)->delete();

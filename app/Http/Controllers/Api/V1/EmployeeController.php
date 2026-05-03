@@ -13,7 +13,6 @@ use App\Services\QuotaService;
 use App\Support\PublicDiskUpload;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class EmployeeController extends Controller
 {
@@ -254,7 +253,7 @@ class EmployeeController extends Controller
         $user = $request->user();
 
         if ($user->avatar) {
-            Storage::disk('public')->delete(str_replace('/storage/', '', $user->avatar));
+            PublicDiskUpload::deleteFromPublicUrl($user->avatar);
         }
 
         $user->avatar = PublicDiskUpload::store($request->file('avatar'), 'avatars');

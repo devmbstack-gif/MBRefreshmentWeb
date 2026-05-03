@@ -9,7 +9,6 @@ use App\Support\PublicDiskUpload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -140,7 +139,7 @@ class ItemController extends Controller
 
         if ($request->file('image')) {
             if ($item->image_url) {
-                Storage::disk('public')->delete(str_replace('/storage/', '', $item->image_url));
+                PublicDiskUpload::deleteFromPublicUrl($item->image_url);
             }
 
             $data['image_url'] = PublicDiskUpload::store(
@@ -178,7 +177,7 @@ class ItemController extends Controller
         }
 
         if ($item->image_url) {
-            Storage::disk('public')->delete(str_replace('/storage/', '', $item->image_url));
+            PublicDiskUpload::deleteFromPublicUrl($item->image_url);
         }
 
         $item->delete();

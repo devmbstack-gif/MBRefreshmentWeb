@@ -7,7 +7,6 @@ use App\Models\Banner;
 use App\Support\PublicDiskUpload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -80,7 +79,7 @@ class BannerController extends Controller
 
         if ($request->file('image')) {
             if ($banner->image_url) {
-                Storage::disk('public')->delete(str_replace('/storage/', '', $banner->image_url));
+                PublicDiskUpload::deleteFromPublicUrl($banner->image_url);
             }
             $data['image_url'] = PublicDiskUpload::store(
                 $request->file('image'),
@@ -96,7 +95,7 @@ class BannerController extends Controller
     public function destroy(Banner $banner): RedirectResponse
     {
         if ($banner->image_url) {
-            Storage::disk('public')->delete(str_replace('/storage/', '', $banner->image_url));
+            PublicDiskUpload::deleteFromPublicUrl($banner->image_url);
         }
         $banner->delete();
 
