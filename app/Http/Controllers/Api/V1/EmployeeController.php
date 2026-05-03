@@ -10,6 +10,7 @@ use App\Models\QuotaUsage;
 use App\Models\User;
 use App\Services\NotificationService;
 use App\Services\QuotaService;
+use App\Support\PublicDiskUpload;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -256,7 +257,7 @@ class EmployeeController extends Controller
             Storage::disk('public')->delete(str_replace('/storage/', '', $user->avatar));
         }
 
-        $user->avatar = '/storage/'.$request->file('avatar')->store('avatars', 'public');
+        $user->avatar = PublicDiskUpload::store($request->file('avatar'), 'avatars');
         $user->save();
 
         return response()->json([
@@ -330,7 +331,10 @@ class EmployeeController extends Controller
         $attachmentPaths = [];
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
-                $attachmentPaths[] = '/storage/'.$file->store('feedback-attachments', 'public');
+                $attachmentPaths[] = PublicDiskUpload::store(
+                    $file,
+                    'feedback-attachments',
+                );
             }
         }
 
@@ -389,7 +393,10 @@ class EmployeeController extends Controller
         $attachmentPaths = [];
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
-                $attachmentPaths[] = '/storage/'.$file->store('feedback-attachments', 'public');
+                $attachmentPaths[] = PublicDiskUpload::store(
+                    $file,
+                    'feedback-attachments',
+                );
             }
         }
 

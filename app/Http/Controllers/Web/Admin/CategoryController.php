@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Category;
+use App\Support\PublicDiskUpload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -26,7 +27,7 @@ class CategoryController extends Controller
         $validated = $request->validate($this->rules());
 
         $imageUrl = $request->file('image')
-            ? '/storage/'.$request->file('image')->store('categories', 'public')
+            ? PublicDiskUpload::store($request->file('image'), 'categories')
             : null;
 
         Category::create([
@@ -53,7 +54,10 @@ class CategoryController extends Controller
                 Storage::disk('public')->delete(str_replace('/storage/', '', $category->image_url));
             }
 
-            $data['image_url'] = '/storage/'.$request->file('image')->store('categories', 'public');
+            $data['image_url'] = PublicDiskUpload::store(
+                $request->file('image'),
+                'categories',
+            );
         }
 
         $category->update($data);

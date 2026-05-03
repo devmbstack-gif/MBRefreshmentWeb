@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Item;
+use App\Support\PublicDiskUpload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -93,7 +94,7 @@ class ItemController extends Controller
             ->firstOrFail();
 
         $imageUrl = $request->file('image')
-            ? '/storage/'.$request->file('image')->store('items', 'public')
+            ? PublicDiskUpload::store($request->file('image'), 'items')
             : null;
 
         Item::create([
@@ -142,7 +143,10 @@ class ItemController extends Controller
                 Storage::disk('public')->delete(str_replace('/storage/', '', $item->image_url));
             }
 
-            $data['image_url'] = '/storage/'.$request->file('image')->store('items', 'public');
+            $data['image_url'] = PublicDiskUpload::store(
+                $request->file('image'),
+                'items',
+            );
         }
 
         $item->update($data);

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Banner;
+use App\Support\PublicDiskUpload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -48,7 +49,7 @@ class BannerController extends Controller
         $validated = $request->validate($this->rules());
 
         $imageUrl = $request->file('image')
-            ? '/storage/'.$request->file('image')->store('banners', 'public')
+            ? PublicDiskUpload::store($request->file('image'), 'banners')
             : null;
 
         Banner::create([
@@ -81,7 +82,10 @@ class BannerController extends Controller
             if ($banner->image_url) {
                 Storage::disk('public')->delete(str_replace('/storage/', '', $banner->image_url));
             }
-            $data['image_url'] = '/storage/'.$request->file('image')->store('banners', 'public');
+            $data['image_url'] = PublicDiskUpload::store(
+                $request->file('image'),
+                'banners',
+            );
         }
 
         $banner->update($data);

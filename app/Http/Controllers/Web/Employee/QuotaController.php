@@ -10,6 +10,7 @@ use App\Models\QuotaUsage;
 use App\Models\User;
 use App\Services\NotificationService;
 use App\Services\QuotaService;
+use App\Support\PublicDiskUpload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -188,7 +189,10 @@ class QuotaController extends Controller
         $attachmentPaths = [];
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $file) {
-                $attachmentPaths[] = '/storage/'.$file->store('feedback-attachments', 'public');
+                $attachmentPaths[] = PublicDiskUpload::store(
+                    $file,
+                    'feedback-attachments',
+                );
             }
         }
 

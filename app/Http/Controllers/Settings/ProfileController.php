@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Settings\ProfileDeleteRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
+use App\Support\PublicDiskUpload;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -61,7 +62,7 @@ class ProfileController extends Controller
             Storage::disk('public')->delete(str_replace('/storage/', '', $user->avatar));
         }
 
-        $user->avatar = '/storage/'.$request->file('avatar')->store('avatars', 'public');
+        $user->avatar = PublicDiskUpload::store($request->file('avatar'), 'avatars');
         $user->save();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile image updated.')]);

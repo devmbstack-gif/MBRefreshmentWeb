@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Models\User;
+use App\Support\PublicDiskUpload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -72,7 +73,7 @@ class EmployeeController extends Controller
 
         DB::transaction(function () use ($request) {
             $avatar = $request->file('avatar')
-                ? '/storage/'.$request->file('avatar')->store('avatars', 'public')
+                ? PublicDiskUpload::store($request->file('avatar'), 'avatars')
                 : null;
 
             $user = User::create([
@@ -118,7 +119,10 @@ class EmployeeController extends Controller
                     Storage::disk('public')->delete(str_replace('/storage/', '', $employee->user->avatar));
                 }
 
-                $userData['avatar'] = '/storage/'.$request->file('avatar')->store('avatars', 'public');
+                $userData['avatar'] = PublicDiskUpload::store(
+                    $request->file('avatar'),
+                    'avatars',
+                );
             }
 
             $employee->user->update($userData);
