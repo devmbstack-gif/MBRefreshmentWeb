@@ -14,6 +14,7 @@ import {
     Trash2,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -27,6 +28,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+
+const MAX_UPLOAD_IMAGE_BYTES = 2 * 1024 * 1024;
 
 type Item = {
     id: number;
@@ -783,9 +786,20 @@ function CategoryImagePicker({
                             type="file"
                             accept="image/jpeg,image/png,image/webp,image/jpg"
                             className="sr-only"
-                            onChange={(e) =>
-                                onChange(e.target.files?.[0] ?? null)
-                            }
+                            onChange={(e) => {
+                                const picked = e.target.files?.[0] ?? null;
+                                e.target.value = '';
+                                if (
+                                    picked &&
+                                    picked.size > MAX_UPLOAD_IMAGE_BYTES
+                                ) {
+                                    toast.error(
+                                        'Image must be 2 MB or smaller. Pick a smaller file.',
+                                    );
+                                    return;
+                                }
+                                onChange(picked);
+                            }}
                         />
                     </label>
                     {file && (
@@ -1244,9 +1258,20 @@ function ItemImageField({
                             type="file"
                             accept="image/*"
                             className="hidden"
-                            onChange={(e) =>
-                                onChange(e.target.files?.[0] ?? null)
-                            }
+                            onChange={(e) => {
+                                const picked = e.target.files?.[0] ?? null;
+                                e.target.value = '';
+                                if (
+                                    picked &&
+                                    picked.size > MAX_UPLOAD_IMAGE_BYTES
+                                ) {
+                                    toast.error(
+                                        'Image must be 2 MB or smaller. Pick a smaller file.',
+                                    );
+                                    return;
+                                }
+                                onChange(picked);
+                            }}
                         />
                     </label>
                     <p className="mt-1.5 text-xs leading-5 text-slate-500">

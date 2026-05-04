@@ -2,11 +2,14 @@ import { Head, router, useForm, usePage } from '@inertiajs/react';
 import {
     CheckCircle2,
     ClipboardList,
+    Trash,
     Pencil,
     Plus,
     Sparkles,
     Trash2,
     Users,
+    Zap,
+    ZapOff,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -30,6 +33,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 type PlanItem = {
     item_id: number;
@@ -185,7 +193,7 @@ export default function AdminPlans({
                         </p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
                         {plans.map((plan) => (
                             <PlanCard
                                 key={plan.id}
@@ -250,7 +258,7 @@ function PlanCard({
     onDelete: () => void;
 }) {
     return (
-        <div className="flex min-w-0 flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
+        <div className="flex w-full min-w-0 flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
             <div className="border-b border-slate-100 bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-4 text-white sm:px-5">
                 <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
@@ -305,42 +313,101 @@ function PlanCard({
                         {plan.assigned_count} assigned
                     </span>
 
-                    <div className="grid grid-cols-2 gap-2 min-[480px]:grid-cols-4">
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={onEdit}
-                            className="rounded-xl"
-                        >
-                            <Pencil className="h-3.5 w-3.5" />
-                            Edit
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={onToggleStatus}
-                            className="rounded-xl"
-                        >
-                            {plan.is_active ? 'Deactivate' : 'Activate'}
-                        </Button>
-                        <Button
-                            size="sm"
-                            onClick={onAssign}
-                            className="gap-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-600"
-                        >
-                            <Users className="h-3.5 w-3.5" />
-                            Assign
-                        </Button>
-                        <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={onDelete}
-                            disabled={plan.is_active}
-                            className="rounded-xl disabled:bg-slate-300"
-                        >
-                            <Trash2 className="h-3.5 w-3.5" />
-                            Delete
-                        </Button>
+                    <div className="grid w-full grid-cols-2 gap-2 min-[440px]:grid-cols-4 min-[440px]:gap-1.5">
+                        <div className="flex min-w-0 justify-center">
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        type="button"
+                                        size="icon"
+                                        variant="outline"
+                                        onClick={onEdit}
+                                        className="h-9 w-9 shrink-0 rounded-lg border-slate-200"
+                                        aria-label="Edit plan"
+                                    >
+                                        <Pencil className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    <p>Edit</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </div>
+                        <div className="flex min-w-0 justify-center">
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        type="button"
+                                        size="icon"
+                                        variant="outline"
+                                        onClick={onToggleStatus}
+                                        className="h-9 w-9 shrink-0 rounded-lg border-slate-200"
+                                        aria-label={
+                                            plan.is_active
+                                                ? 'Deactivate plan'
+                                                : 'Activate plan'
+                                        }
+                                    >
+                                        {plan.is_active ? (
+                                            <ZapOff className="h-4 w-4" />
+                                        ) : (
+                                            <Zap className="h-4 w-4" />
+                                        )}
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    <p>
+                                        {plan.is_active
+                                            ? 'Deactivate'
+                                            : 'Activate'}
+                                    </p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </div>
+                        <div className="flex min-w-0 justify-center">
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        type="button"
+                                        size="icon"
+                                        onClick={onAssign}
+                                        className="h-9 w-9 shrink-0 rounded-lg bg-emerald-500 hover:bg-emerald-600"
+                                        aria-label="Assign plan"
+                                    >
+                                        <Users className="h-4 w-4" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    <p>Assign</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </div>
+                        <div className="flex min-w-0 justify-center">
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <span className="inline-flex shrink-0">
+                                        <Button
+                                            type="button"
+                                            size="icon"
+                                            variant="destructive"
+                                            onClick={onDelete}
+                                            disabled={plan.is_active}
+                                            className="h-9 w-9 shrink-0 rounded-lg disabled:bg-slate-300 disabled:text-slate-500 disabled:opacity-100"
+                                            aria-label="Delete plan"
+                                        >
+                                            <Trash className="h-4 w-4" />
+                                        </Button>
+                                    </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="top">
+                                    <p>
+                                        {plan.is_active
+                                            ? 'Deactivate first to delete'
+                                            : 'Delete'}
+                                    </p>
+                                </TooltipContent>
+                            </Tooltip>
+                        </div>
                     </div>
                 </div>
             </div>
