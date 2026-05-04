@@ -33,7 +33,7 @@ export default function Welcome() {
                             <img
                                 src="/common/logo.png"
                                 alt="Bs Refreshment"
-                                className="h-40 w-auto object-contain"
+                                className="h-15 w-auto object-contain"
                             />
                         </div>
 
@@ -226,7 +226,7 @@ export default function Welcome() {
                             <img
                                 src="/common/logo.png"
                                 alt="Bs Refreshment"
-                                className="h-7 w-auto"
+                                className="h-10 w-auto"
                             />
                         </div>
                         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">

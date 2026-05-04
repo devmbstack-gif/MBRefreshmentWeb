@@ -333,7 +333,7 @@ export default function AppSidebarLayout({ children }: AppLayoutProps) {
                         />
                         {!collapsed && (
                             <span className="truncate text-sm font-semibold text-gray-900">
-                                MB Refreshment
+                                Team Fuel
                             </span>
                         )}
                     </Link>
