@@ -750,8 +750,8 @@ function CategoryImagePicker({
     const displaySrc = objectUrl ?? currentImageUrl ?? null;
 
     return (
-        <div className="rounded-2xl border border-emerald-100 bg-gradient-to-br from-white via-emerald-50/30 to-cyan-50/40 p-4 shadow-sm">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className="min-w-0 overflow-hidden rounded-2xl border border-emerald-100 bg-gradient-to-br from-white via-emerald-50/30 to-cyan-50/40 p-4 shadow-sm">
+            <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center">
                 <div className="shrink-0">
                     {displaySrc ? (
                         <img
@@ -766,13 +766,16 @@ function CategoryImagePicker({
                     )}
                 </div>
                 <div className="min-w-0 flex-1 space-y-2">
-                    <label className="flex cursor-pointer flex-col items-stretch gap-2 sm:flex-row sm:items-center">
-                        <span className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-dashed border-emerald-300 bg-white/90 px-4 py-3 text-sm font-medium text-emerald-800 shadow-sm transition hover:border-emerald-400 hover:bg-emerald-50/80">
+                    <label className="flex min-w-0 cursor-pointer flex-col items-stretch gap-2 sm:flex-row sm:items-center">
+                        <span className="flex min-w-0 w-full flex-1 items-center justify-center gap-2 overflow-hidden rounded-xl border border-dashed border-emerald-300 bg-white/90 px-3 py-3 text-sm font-medium text-emerald-800 shadow-sm transition hover:border-emerald-400 hover:bg-emerald-50/80 sm:px-4">
                             <ImagePlus
                                 className="h-4 w-4 shrink-0"
                                 aria-hidden
                             />
-                            <span className="truncate">
+                            <span
+                                className="min-w-0 truncate text-center sm:text-left"
+                                title={file ? file.name : undefined}
+                            >
                                 {file ? file.name : 'Choose category image'}
                             </span>
                         </span>
@@ -854,7 +857,7 @@ function CategoryModal({
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
-            <DialogContent className="flex max-h-[90vh] w-[calc(100vw-1.5rem)] max-w-2xl flex-col gap-0 overflow-hidden rounded-3xl border border-emerald-100 bg-white p-0 shadow-2xl sm:w-full">
+            <DialogContent className="!flex h-fit max-h-[90vh] w-[calc(100vw-1.5rem)] max-w-2xl !flex-col gap-0 overflow-y-auto overflow-x-hidden rounded-3xl border border-emerald-100 bg-white p-0 shadow-2xl sm:w-full">
                 <DialogHeader className="shrink-0 space-y-2 border-b border-emerald-100 bg-gradient-to-r from-white via-emerald-50/70 to-cyan-50/50 px-6 py-5 text-left sm:px-8">
                     <div className="flex items-start gap-3">
                         <span className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25">
@@ -872,8 +875,8 @@ function CategoryModal({
                     </div>
                 </DialogHeader>
 
-                <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8">
-                    <div className="mx-auto max-w-xl space-y-8">
+                <div className="min-w-0 shrink-0 px-4 py-6 sm:px-8">
+                    <div className="mx-auto min-w-0 max-w-xl space-y-8">
                         <section className="rounded-2xl border border-slate-200/90 bg-gradient-to-b from-slate-50/90 to-white p-5 shadow-sm sm:p-6">
                             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
                                 <div className="flex items-center gap-3">
