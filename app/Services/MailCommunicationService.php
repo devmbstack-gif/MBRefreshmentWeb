@@ -495,6 +495,86 @@ class MailCommunicationService
         );
     }
 
+    /**
+     * Notify every active employee and super admin (except the new account) by
+     * in-app notification, push (FCM), and email when an admin creates a new employee.
+     *
+     * Edit the push/email title and body copy below for your product name and tone.
+     */
+    public function announceNewEmployeeToOrganization(User $newUser, Employee $newEmployee): void
+    {
+        $newUser->loadMissing('name');
+        $newEmployee->loadMissing('employee_code', 'department');
+
+        $appName = (string) (config('app.name') ?: 'MB Refreshment');
+
+        $pushEmailTitle = "New employee joined {$appName}";
+
+        $pushEmailMessage = "{$newUser->name} ({$newEmployee->employee_code}) has joined the team on {$appName}.";
+
+        $recipients = User::query()
+            ->where('id', '!=', $newUser->id)
+            ->where('is_active', true)
+            ->whereIn('role', ['employee', 'super_admin'])
+            ->get();
+
+        if ($recipients->isEmpty()) {
+            return;
+        }
+
+        $fromAddress = (string) config('mail.from.address');
+        $fromName = (string) (config('mail.from.name') ?: $appName);
+
+        foreach ($recipients as $recipient) {
+            $this->notificationService->saveInApp(
+                $recipient,
+                'general',
+                $pushEmailTitle,
+                $pushEmailMessage,
+                $newEmployee->id
+            );
+
+            if ($fromAddress === '') {
+                continue;
+            }
+
+            $toEmail = filter_var(trim((string) $recipient->email), FILTER_VALIDATE_EMAIL);
+            if ($toEmail === false) {
+                continue;
+            }
+
+            $html = View::make('emails.new-employee-team', [
+                'emailTitle' => $pushEmailTitle,
+                'headerLine' => 'Team update',
+                'recipientName' => $recipient->name,
+                'announcementLine' => $pushEmailMessage,
+                'newEmployeeName' => $newUser->name,
+                'newEmployeeCode' => $newEmployee->employee_code,
+                'department' => trim((string) ($newEmployee->department ?? '')),
+                'ctaUrl' => $recipient->isSuperAdmin()
+                    ? url('/admin/dashboard')
+                    : url('/employee/quota'),
+                'appName' => $appName,
+            ])->render();
+
+            $plainBody = $pushEmailMessage."\n\n".'Sign in: '.($recipient->isSuperAdmin()
+                ? url('/admin/dashboard')
+                : url('/employee/quota'));
+
+            $this->dispatchMail(
+                kind: 'employee_joined',
+                direction: 'to_user',
+                subject: $pushEmailTitle,
+                body: $plainBody,
+                html: $html,
+                fromEmail: $fromAddress,
+                fromName: $fromName,
+                toEmail: $toEmail,
+                employeeId: $newEmployee->id,
+            );
+        }
+    }
+
     private function dispatchMail(
         string $kind,
         string $direction,

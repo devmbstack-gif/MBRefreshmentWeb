@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Web\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Employee;
 use App\Models\User;
+use App\Services\MailCommunicationService;
 use App\Support\PublicDiskUpload;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -66,16 +67,19 @@ class EmployeeController extends Controller
         ]);
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, MailCommunicationService $mail): RedirectResponse
     {
         $request->validate($this->employeeValidationRules(), $this->employeeValidationMessages());
 
-        DB::transaction(function () use ($request) {
+        $createdUser = null;
+        $createdEmployee = null;
+
+        DB::transaction(function () use ($request, &$createdUser, &$createdEmployee) {
             $avatar = $request->file('avatar')
                 ? PublicDiskUpload::store($request->file('avatar'), 'avatars')
                 : null;
 
-            $user = User::create([
+            $createdUser = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => $request->password,
@@ -85,8 +89,8 @@ class EmployeeController extends Controller
                 'is_active' => true,
             ]);
 
-            Employee::create([
-                'user_id' => $user->id,
+            $createdEmployee = Employee::create([
+                'user_id' => $createdUser->id,
                 'employee_code' => $request->employee_code,
                 'department' => $request->department,
                 'designation' => $request->designation,
@@ -94,6 +98,10 @@ class EmployeeController extends Controller
                 'joining_date' => $request->joining_date,
             ]);
         });
+
+        if ($createdUser !== null && $createdEmployee !== null) {
+            $mail->announceNewEmployeeToOrganization($createdUser, $createdEmployee);
+        }
 
         return redirect()->route('admin.employees.index')->with('success', 'Employee account created successfully.');
     }

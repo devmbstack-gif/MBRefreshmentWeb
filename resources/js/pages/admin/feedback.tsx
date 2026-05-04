@@ -237,18 +237,28 @@ export default function AdminFeedback({
                                         ))}
                                     </div>
                                 )}
-                                <div className="mt-4">
+                                <div className="mt-4 flex flex-wrap gap-2">
                                     <Button
                                         size="sm"
                                         variant="outline"
-                                        onClick={() => setReplyingTo(message)}
+                                        onClick={() => {
+                                            setReplyingTo((current) => {
+                                                if (current?.id === message.id) {
+                                                    form.reset();
+                                                    return null;
+                                                }
+                                                form.reset();
+                                                return message;
+                                            });
+                                        }}
                                     >
-                                        Reply to employee
+                                        {replyingTo?.id === message.id
+                                            ? 'Close reply'
+                                            : 'Reply to employee'}
                                     </Button>
                                     <Button
                                         size="sm"
                                         variant="destructive"
-                                        className="ml-2"
                                         onClick={() =>
                                             setDeletingMessage(message)
                                         }
@@ -256,52 +266,65 @@ export default function AdminFeedback({
                                         Delete thread
                                     </Button>
                                 </div>
+
+                                {replyingTo?.id === message.id && (
+                                    <form
+                                        onSubmit={handleReplySubmit}
+                                        className="mt-4 space-y-3 rounded-2xl border border-emerald-200/80 bg-emerald-50/50 p-4 shadow-inner"
+                                    >
+                                        <p className="text-sm font-semibold text-slate-900">
+                                            Reply to{' '}
+                                            {replyingTo.employee_name ??
+                                                'Employee'}
+                                        </p>
+                                        <p className="text-xs text-slate-500">
+                                            {replyingTo.subject}
+                                        </p>
+                                        <div className="space-y-1.5">
+                                            <Label>Reply message</Label>
+                                            <textarea
+                                                value={form.data.body}
+                                                onChange={(e) =>
+                                                    form.setData(
+                                                        'body',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                rows={5}
+                                                className="w-full rounded-md border border-input bg-background p-3 text-sm"
+                                                placeholder="Write your reply..."
+                                            />
+                                            {form.errors.body && (
+                                                <p className="text-xs text-destructive">
+                                                    {form.errors.body}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div className="flex justify-end gap-2">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() => {
+                                                    form.reset();
+                                                    setReplyingTo(null);
+                                                }}
+                                            >
+                                                Cancel
+                                            </Button>
+                                            <Button
+                                                type="submit"
+                                                disabled={form.processing}
+                                            >
+                                                {form.processing
+                                                    ? 'Sending...'
+                                                    : 'Send Reply'}
+                                            </Button>
+                                        </div>
+                                    </form>
+                                )}
                             </div>
                         ))}
                     </div>
-                )}
-
-                {replyingTo && (
-                    <form
-                        onSubmit={handleReplySubmit}
-                        className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-                    >
-                        <p className="text-sm font-semibold text-slate-900">
-                            Reply to {replyingTo.employee_name ?? 'Employee'}
-                        </p>
-                        <p className="text-xs text-slate-500">
-                            {replyingTo.subject}
-                        </p>
-                        <div className="space-y-1.5">
-                            <Label>Reply message</Label>
-                            <textarea
-                                value={form.data.body}
-                                onChange={(e) =>
-                                    form.setData('body', e.target.value)
-                                }
-                                rows={5}
-                                className="w-full rounded-md border border-input bg-background p-3 text-sm"
-                                placeholder="Write your reply..."
-                            />
-                            {form.errors.body && (
-                                <p className="text-xs text-destructive">
-                                    {form.errors.body}
-                                </p>
-                            )}
-                        </div>
-                        <div className="flex justify-end gap-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setReplyingTo(null)}
-                            >
-                                Cancel
-                            </Button>
-                            <Button type="submit" disabled={form.processing}>
-                                {form.processing ? 'Sending...' : 'Send Reply'}
-                            </Button>
-                        </div>
-                    </form>
                 )}
 
                 {deletingMessage && (
