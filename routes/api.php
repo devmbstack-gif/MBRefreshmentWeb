@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\PolicyController;
 use App\Http\Controllers\Api\V1\BannerController;
 use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\EmployeeController;
@@ -8,6 +9,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
     Route::get('/health', fn () => response()->json(['status' => 'ok']));
+
+    Route::get('/policies', [PolicyController::class, 'show']);
 
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/categories/{category}/items', [CategoryController::class, 'itemsForCategory']);

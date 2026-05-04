@@ -6,6 +6,7 @@ import {
     ClipboardList,
     Clock,
     Coffee,
+    FileText,
     LayoutDashboard,
     LogOut,
     Menu,
@@ -132,6 +133,11 @@ export default function AppSidebarLayout({ children }: AppLayoutProps) {
               {
                   label: 'SETTINGS',
                   items: [
+                      {
+                          title: 'Terms & privacy',
+                          href: '/admin/policies',
+                          icon: FileText,
+                      },
                       {
                           title: 'Settings',
                           href: profileEdit(),

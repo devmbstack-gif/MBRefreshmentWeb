@@ -221,7 +221,7 @@ export default function Welcome() {
 
                 {/* Footer */}
                 <footer className="border-t border-border">
-                    <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6 text-sm text-muted-foreground">
+                    <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 py-6 text-sm text-muted-foreground sm:flex-row">
                         <div className="flex items-center gap-2">
                             <img
                                 src="/common/logo.png"
@@ -229,9 +229,25 @@ export default function Welcome() {
                                 className="h-7 w-auto"
                             />
                         </div>
-                        <span>
-                            © {new Date().getFullYear()} All rights reserved.
-                        </span>
+                        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+                            <Link
+                                href="/terms-of-use"
+                                className="hover:text-foreground underline-offset-4 hover:underline"
+                            >
+                                Terms of use
+                            </Link>
+                            <Link
+                                href="/privacy-policy"
+                                className="hover:text-foreground underline-offset-4 hover:underline"
+                            >
+                                Privacy policy
+                            </Link>
+                            <span className="hidden sm:inline">·</span>
+                            <span>
+                                © {new Date().getFullYear()} All rights
+                                reserved.
+                            </span>
+                        </div>
                     </div>
                 </footer>
             </div>

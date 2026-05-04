@@ -4,6 +4,7 @@ import {
     ClipboardList,
     Clock,
     Coffee,
+    FileText,
     Flag,
     Images,
     LayoutDashboard,
@@ -55,7 +56,14 @@ const adminNavGroups: NavGroup[] = [
     },
     {
         label: 'Settings',
-        items: [{ title: 'Settings', href: profileEdit(), icon: Settings }],
+        items: [
+            {
+                title: 'Terms & privacy',
+                href: '/admin/policies',
+                icon: FileText,
+            },
+            { title: 'Settings', href: profileEdit(), icon: Settings },
+        ],
     },
 ];
 

@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Web\PolicyPageController;
 use App\Http\Controllers\Web\Admin\AdminSearchController;
+use App\Http\Controllers\Web\Admin\PolicyController;
 use App\Http\Controllers\Web\Admin\BannerController;
 use App\Http\Controllers\Web\Admin\CategoryController;
 use App\Http\Controllers\Web\Admin\DashboardController;
@@ -19,6 +21,9 @@ use Laravel\Fortify\Features;
 Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
+
+Route::get('/terms-of-use', [PolicyPageController::class, 'terms'])->name('terms-of-use');
+Route::get('/privacy-policy', [PolicyPageController::class, 'privacy'])->name('privacy-policy');
 
 Route::middleware(['auth'])->get('/dashboard', function (Request $request) {
     if ($request->user()->isSuperAdmin()) {
@@ -70,6 +75,11 @@ Route::middleware(['auth', 'role.admin'])
         Route::patch('/banners/{banner}/toggle-status', [BannerController::class, 'toggleStatus'])->name('banners.toggle-status');
         Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
         Route::patch('/notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+
+        Route::get('/policies', [PolicyController::class, 'index'])->name('policies.index');
+        Route::put('/policies/{type}', [PolicyController::class, 'update'])
+            ->whereIn('type', ['terms', 'privacy'])
+            ->name('policies.update');
     });
 
 Route::middleware(['auth', 'role.employee'])
