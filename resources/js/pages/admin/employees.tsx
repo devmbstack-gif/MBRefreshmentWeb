@@ -32,6 +32,7 @@ type Employee = {
     user_id: number;
     name: string;
     email: string;
+    phone: string | null;
     shareable_password: string | null;
     avatar: string | null;
     employee_code: string;
@@ -89,6 +90,7 @@ export default function AdminEmployees({ employees }: Props) {
         const details = [
             `Name: ${employee.name}`,
             `Company Email: ${employee.email}`,
+            `Phone: ${employee.phone ?? 'Not added'}`,
             `Password: ${employee.shareable_password ?? 'Not available'}`,
             `Employee Code: ${employee.employee_code}`,
             `Department: ${employee.department ?? 'Not assigned'}`,
@@ -618,6 +620,7 @@ function CreateEmployeeModal({
     const form = useForm({
         name: '',
         email: '',
+        phone: '',
         password: '',
         avatar: null as File | null,
         employee_code: '',
@@ -709,6 +712,19 @@ function CreateEmployeeModal({
                                         )
                                     }
                                     placeholder="ali.personal@gmail.com"
+                                />
+                            </FormField>
+
+                            <FormField
+                                label="Phone Number"
+                                error={form.errors.phone}
+                            >
+                                <Input
+                                    value={form.data.phone}
+                                    onChange={(e) =>
+                                        form.setData('phone', e.target.value)
+                                    }
+                                    placeholder="+92 300 1234567"
                                 />
                             </FormField>
 
@@ -847,6 +863,7 @@ function EditEmployeeModal({
     const form = useForm({
         name: employee.name,
         email: employee.email,
+        phone: employee.phone ?? '',
         password: '',
         avatar: null as File | null,
         employee_code: employee.employee_code,
@@ -938,6 +955,19 @@ function EditEmployeeModal({
                                             e.target.value,
                                         )
                                     }
+                                />
+                            </FormField>
+
+                            <FormField
+                                label="Phone Number"
+                                error={form.errors.phone}
+                            >
+                                <Input
+                                    value={form.data.phone}
+                                    onChange={(e) =>
+                                        form.setData('phone', e.target.value)
+                                    }
+                                    placeholder="+92 300 1234567"
                                 />
                             </FormField>
 

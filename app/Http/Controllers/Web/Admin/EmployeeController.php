@@ -21,6 +21,7 @@ class EmployeeController extends Controller
         return [
             'name' => 'required|string|max:100',
             'email' => 'required|email|unique:users,email,'.($employee?->user_id ?? 'NULL'),
+            'phone' => 'nullable|string|max:30',
             'password' => $employee
                 ? ['nullable', Password::min(8)]
                 : ['required', Password::min(8)],
@@ -52,6 +53,7 @@ class EmployeeController extends Controller
                 'user_id' => $employee->user_id,
                 'name' => $employee->user->name,
                 'email' => $employee->user->email,
+                'phone' => $employee->user->phone,
                 'shareable_password' => $employee->user->shareable_password,
                 'avatar' => $employee->user->avatar,
                 'employee_code' => $employee->employee_code,
@@ -82,6 +84,7 @@ class EmployeeController extends Controller
             $createdUser = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
+                'phone' => $request->phone,
                 'password' => $request->password,
                 'shareable_password' => $request->password,
                 'role' => 'employee',
@@ -114,6 +117,7 @@ class EmployeeController extends Controller
             $userData = [
                 'name' => $request->name,
                 'email' => $request->email,
+                'phone' => $request->phone,
             ];
 
             if ($request->filled('password')) {
