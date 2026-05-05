@@ -503,9 +503,6 @@ class MailCommunicationService
      */
     public function announceNewEmployeeToOrganization(User $newUser, Employee $newEmployee): void
     {
-        $newUser->loadMissing('name');
-        $newEmployee->loadMissing('employee_code', 'department');
-
         $appName = (string) (config('app.name') ?: 'MB Refreshment');
 
         $pushEmailTitle = "New employee joined {$appName}";

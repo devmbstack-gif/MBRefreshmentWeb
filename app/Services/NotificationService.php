@@ -44,7 +44,7 @@ class NotificationService
         $this->saveInApp(
             user: $targetUser,
             type: 'quota_low',
-            title: 'Quota Running Low',
+            title: 'Credits Running Low',
             message: "Only 1 {$quota->item->name} left in your quota. Use it before the plan expires!",
             relatedId: $quota->id
         );
@@ -62,7 +62,7 @@ class NotificationService
         $this->saveInApp(
             user: $targetUser,
             type: 'quota_used',
-            title: 'Quota Used',
+            title: 'Credit Used',
             message: "You used {$quantity} {$quota->item->name}. Remaining: {$quota->remaining_qty}.",
             relatedId: $quota->id
         );
@@ -80,7 +80,7 @@ class NotificationService
         $this->saveInApp(
             user: $targetUser,
             type: 'quota_exhausted',
-            title: 'Quota Exhausted',
+            title: 'Credits Exhausted',
             message: "Your {$quota->item->name} quota is fully used. No more remaining.",
             relatedId: $quota->id
         );

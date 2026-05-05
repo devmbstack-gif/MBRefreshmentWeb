@@ -42,13 +42,16 @@ class QuotaPlanController extends Controller
             ]);
 
         $availableItems = Item::where('is_active', true)->get(['id', 'name', 'category', 'stock_quantity']);
-        $employees = Employee::with('user')->get()->map(fn ($emp) => [
-            'id' => $emp->id,
-            'name' => $emp->user->name,
-            'avatar' => $emp->user->avatar,
-            'employee_code' => $emp->employee_code,
-            'department' => $emp->department,
-        ]);
+        $employees = Employee::with('user')
+            ->whereHas('user', fn ($q) => $q->where('is_active', true))
+            ->get()
+            ->map(fn ($emp) => [
+                'id' => $emp->id,
+                'name' => $emp->user->name,
+                'avatar' => $emp->user->avatar,
+                'employee_code' => $emp->employee_code,
+                'department' => $emp->department,
+            ]);
 
         return Inertia::render('admin/plans', [
             'plans' => $plans,
@@ -168,6 +171,17 @@ class QuotaPlanController extends Controller
         ]);
 
         $employeeIds = collect($validated['employee_ids'])->map(fn ($id) => (int) $id)->unique()->values()->all();
+
+        $inactiveAssignment = Employee::query()
+            ->whereIn('id', $employeeIds)
+            ->whereHas('user', fn ($q) => $q->where('is_active', false))
+            ->exists();
+
+        if ($inactiveAssignment) {
+            throw ValidationException::withMessages([
+                'employee_ids' => 'Cannot assign plans to deactivated employees.',
+            ]);
+        }
 
         $plan->load('planItems.item');
         $planItemsById = $plan->planItems->keyBy('item_id');
