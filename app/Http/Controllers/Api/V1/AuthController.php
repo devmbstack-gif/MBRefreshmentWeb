@@ -67,6 +67,7 @@ class AuthController extends Controller
             ])->save();
         }
 
+        $user->tokens()->delete();
         $token = $user->createToken($validated['device_name'] ?? 'flutter-mobile')->plainTextToken;
 
         $employee = $user->employee ? [
