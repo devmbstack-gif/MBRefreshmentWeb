@@ -106,14 +106,26 @@ class NotificationService
 
     public function saveInApp(User $user, string $type, string $title, string $message, ?int $relatedId = null): void
     {
+        $normalizedTitle = trim($title);
+        $normalizedMessage = trim($message);
+        $emptyLikeBodies = ['', '{}', '[]', 'null'];
+
+        if ($normalizedTitle === '') {
+            $normalizedTitle = (string) (config('app.name') ?: 'Notification');
+        }
+
+        if (in_array(strtolower($normalizedMessage), $emptyLikeBodies, true)) {
+            $normalizedMessage = $normalizedTitle;
+        }
+
         $allowedTypes = ['quota_assigned', 'quota_used', 'quota_low', 'quota_exhausted', 'quota_expired', 'general'];
         $safeType = in_array($type, $allowedTypes, true) ? $type : 'general';
 
         AppNotification::create([
             'user_id' => $user->id,
             'type' => $safeType,
-            'title' => $title,
-            'message' => $message,
+            'title' => $normalizedTitle,
+            'message' => $normalizedMessage,
             'is_read' => false,
             'related_id' => $relatedId,
             'created_at' => now(),
@@ -122,7 +134,7 @@ class NotificationService
         $user->refresh();
 
         if ($user->fcm_token !== null && $user->fcm_token !== '') {
-            $this->fcmService->sendToUser($user, $title, $message, [
+            $this->fcmService->sendToUser($user, $normalizedTitle, $normalizedMessage, [
                 'type' => $safeType,
                 'related_id' => $relatedId !== null ? (string) $relatedId : '',
             ]);
