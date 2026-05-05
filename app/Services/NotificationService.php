@@ -26,7 +26,7 @@ class NotificationService
         $this->saveInApp(
             user: $targetUser,
             type: 'quota_assigned',
-            title: 'Quota Assigned',
+            title: 'Plan Assigned',
             message: "You have been assigned the plan: {$plan->title}. Start using your refreshments!",
             relatedId: $plan->id
         );
@@ -45,7 +45,7 @@ class NotificationService
             user: $targetUser,
             type: 'quota_low',
             title: 'Credits Running Low',
-            message: "Only 1 {$quota->item->name} left in your quota. Use it before the plan expires!",
+            message: "Only 1 {$quota->item->name} left in your plan. Use it before the plan expires!",
             relatedId: $quota->id
         );
     }
